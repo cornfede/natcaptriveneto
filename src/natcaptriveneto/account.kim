@@ -1,0 +1,228 @@
+project private namespace natcaptriveneto.account
+using nca.ecosystem.eunis,
+      nca.landuse.ipcc,
+      nca.ecology.ipcc;
+//      (flow_directions_d8) from components.geoprocessing.morphometry,
+//      nca.ecology,
+//      nca.ecoregion;
+
+
+//Previously the annotation of LULC was done in the following commented way
+//for consistency with the LULC classes of the Soil Erosion model, Urban and MineralExtraction were aggregated in the bigger class ArtificialSurface
+//But then I decided to simply customize the lookup table keeping the difference between MineralExtraction and Urban in order to give them two different values for the c_factor in the oil erosion model
+// Annotating 2018 and 2023 LULC
+//model 'local:federico.cornacchia:natcaptriveneto:USO_2018_250m',
+//      'local:federico.cornacchia:natcaptriveneto:USO_2023_250m'
+//      as landcover:LandCoverType
+//		classified into
+//			landcover:Forest              if 2, //UsoForestale (Forest land use)
+//			landcover:ArtificialSurface   if 3, //CaveMiniere (Quarries & mines)
+//			landcover:ArtificialSurface   if 4, //Urbane (Urban & built-up areas)
+//			landcover:WaterBody           if 5, //UsiAcqua (Water bodies)
+//			landcover:ArableLand          if 11, //Seminativi (Arable land)
+//			landcover:Pastureland         if 12, //Foraggere (Permanent grassland)
+//			landcover:PermanentCropland   if 13, //ColturePermanenti (Permanent crops)
+//			landcover:HeterogeneousAgriculturalLand if 16, //AltriUsiAgricoli (Other agricultural land)
+//			landcover:Wetland             if 61, //ZoneUmide (Wetlands)
+//		 	landcover:SparseVegetation    if 62; //AltriUsiNonEconomici (Other non-econ. land) SeminaturalOpenSpace
+		    
+//Also the Construction class was removed because not present anymore as a separate class in the updated TRV LULC rasters currently in use
+// Annotating 2018 and 2023 LULC
+//Note: the class landcover:Construction (117) has been removed as it has been integrated in the class Urban in the more updated LULC raster
+model 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2018_250m',
+      'local:federico.cornacchia:natcaptriveneto:TRV_USO_2023_250m'
+      as landcover:LandCoverType
+		classified into
+			landcover:Forest              if 2, //UsoForestale (Forest land use)
+			landcover:MineralExtraction   if 3, //CaveMiniere (Quarries & mines)
+			landcover:Urban               if 4, //Urbane (Urban & built-up areas)
+			landcover:WaterBody           if 5, //UsiAcqua (Water bodies)
+			landcover:ArableLand          if 11, //Seminativi (Arable land)
+			landcover:Pastureland         if 12, //Foraggere (Permanent grassland)
+			landcover:PermanentCropland   if 13, //ColturePermanenti (Permanent crops)
+			landcover:HeterogeneousAgriculturalLand if 16, //AltriUsiAgricoli (Other agricultural land)
+			landcover:Wetland             if 61, //ZoneUmide (Wetlands)
+		 	landcover:SparseVegetation   if 62; //AltriUsiNonEconomici (Other non-econ. land) SeminaturalOpenSpace
+
+//Trying to produce a table of land cover type change for Triveneto AOI 2018-2023
+//Code taken from un.seea.aries --> seea.aries.tables.landcover
+
+/*
+ * Simplest land cover table has a column for each represented land cover type and
+ * the total area for each of the first and last year, plus a net change row.
+ */
+@var(timespan=(start end))
+define table landcover_basic_trv as {
+	title: "Selected land cover types (area in km²)",
+	label: "Net change in land cover (km²)",
+	target: landcover:LandCoverType	
+	when: end
+	use: tables.compiler.summarize(contabilize-nulls = true, 
+		rowsummary = { filter: "change" title: "Net change"}, 
+		rows =       { filter: %timespan% }, 
+		columns =    { filter: landcover:LandCoverType }, 
+		report='area', 
+		empty='', 
+		no-data = ''
+	)
+};
+
+//Creating a lookup table model for crosswalk ISPRA land cover - EUNIS ecosystem type
+//Note: Please, EUNIS mapping to be adjusted in the future (e.g., not all classes of the same level have been used etc.)
+define CROSS_CORINE_EUNIS as {{
+	
+	landcover                                  |  ecosystem_type
+	------------------------------------------------------
+	landcover:Forest			               |	nca.ecosystem.eunis:ForestWoodedLand,
+	landcover:MineralExtraction			       |	nca.ecosystem.eunis:ExtractiveIndustrialSite,
+	landcover:Urban			                   |	nca.ecosystem.eunis:BuildingCitiesTownVillage,
+	landcover:WaterBody			               |	nca.ecosystem.eunis:InlandSurfaceWater,
+	landcover:ArableLand			           |	nca.ecosystem.eunis:ArableLandMarketGarden, //VegetatedManMadeHabitat
+	landcover:Pastureland			           |	nca.ecosystem.eunis:GrasslandLandDominatedByForbMossLichen,
+	landcover:PermanentCropland			       |	nca.ecosystem.eunis:TreeDominatedManMadeHabitat, //VegetatedManMadeHabitat
+	landcover:HeterogeneousAgriculturalLand	   |	nca.ecosystem.eunis:ArableLandMarketGarden, //VegetatedManMadeHabitat
+	landcover:Wetland			               |	nca.ecosystem.eunis:CoastalHabitats,
+	landcover:SparseVegetation  			   |	nca.ecosystem.eunis:InlandHabitatsNoLittleSoilMostlySparseVegetation
+	
+}};
+
+//Creating a lookup table model for Triveneto ecosystem type based on EUNIS starting from ISPRA land cover classes 
+model type of nca.ecosystem.eunis:Ecosystem 
+    observing landcover:LandCoverType named lct
+    lookup (lct) into CROSS_CORINE_EUNIS;
+
+//Producing ecosystem extent static tables (first for 2018 and then for 2023 separately)
+//Code taken from the last table found in the namespace ecosystemextent of the un.seea.aries project
+define table ecosystem_extent_static_trv as {
+	title: "Selected ecosystem types (area in km²)",
+	label: "Net change in ecosystem type (km²)",
+	target: type of nca.ecosystem.eunis:Ecosystem 
+	columns:({ title:  "{classifier}", target: im:Area in km^2, filter: type of nca.ecosystem.eunis:Ecosystem }
+			 {title: "Total", summarize: sum, style: bold}),
+	rows:   ({ title: "Area {start} (km²)" })};
+
+//NOW FOCUSING ON CARBON ACCOUNTING
+//The approach I adopt is that of modeling both vegetation carbon storage and soil carbon storage and summing them
+//The vegetation carbon model is taken from the un.gbf project
+//The vegetation carbon model from un.gbf takes into account different inputs, including the ClimateZone
+//After testing the model, we noticed that the ClimateZone layer wasn't properly covering the Triveneto coastline and lagoons
+//For this reason, we first implemented a SMOOTHING of the IPCC climate zones layer (global_jrc_ipcc_climate_zones_epsg4326_10km_2010) used in the climate_regulation namespace of the un.gbf project as follows
+
+//REMEMBER: PLEASE REDO THE SMOOTHING, THE CREATION OF THE LAYER AND THE RE-IMPORT OF THE LAYER AT 250m RESOLUTION SET IN CONTEXT TO BE CONSISTENT
+
+//As first step, the code below was used to filter the map data.
+//Specifically, we said to the system to substitute with zero all the values = 2, leaving as they are all the other values
+//This operation is common when one wants to discard a specific category or transfor a "No Data" value in a zero before doing other operations
+
+//number  'local:justus.muhando:im.data.global:im-data-global-ecology.global_jrc_ipcc_climate_zones_epsg4326_10km_2010' as  culo
+//         set to [ 
+//         	culo == 2 ? 0 : culo 
+//         	         ] ;    
+
+//Second, a spatial "smoothing" operation - for every pixel in the map, k.LAB looks at a circular area with a 10-cell radius, calculates the average value of all pixels in that circle, and assigns that average to the central pixel in the new map.
+
+//number smooth_culo
+// observing 	
+//	culo
+//	 using gis.points.collect(aggregate = [ culo ], aggregation = "mean", cellradius?=10, circular = true);  
+
+//The previous interpolation is commented because the produced output was downloaded in local as 'global_jrc_ipcc_climate_zones_trv_interpolation.tiff' and uploaded as resource of the natcaptriveneto project
+
+//number 'local:federico.cornacchia:natcaptriveneto:global_jrc_ipcc_climate_zones_trv_interpolation' as culetto;
+
+//After this, the classification of the climate zones of the interpolated layer was adjusted as follows
+
+model 	'local:federico.cornacchia:natcaptriveneto:global_jrc_ipcc_climate_zones_trv_interpolation'
+	as type of nca.ecology.ipcc:ClimaticZone  named ipcc_climatic_region 
+	classified into
+	nca.ecology.ipcc:WarmTemperateDry if  0.5 to 2.5,
+	nca.ecology.ipcc:WarmTemperateWet if  0   to 0.5,   
+	nca.ecology.ipcc:ColdTemperateWet if  2.5   to 3.5,
+////	nca.ecology.ipcc:ColdTemperateDry if 4,
+ 	nca.ecology.ipcc:PolarMoist if  > 3.5; 
+//// 	nca.ecology.ipcc:PolarDry if 6,	
+////	nca.ecology.ipcc:BorealWet if 7,
+////	nca.ecology.ipcc:BorealDry if 8,
+////	nca.ecology.ipcc:TropicalMontane if 9,
+////	nca.ecology.ipcc:TropicalWet if 10,
+////	nca.ecology.ipcc:TropicalMoist if 11,
+////	nca.ecology.ipcc:TropicalDry if 12;
+
+//I DON'T REMEMBER IF THIS CODE BELOW WAS JUST A TEST, I THINK SO
+//model landcover:LandCoverType
+//    observing type of ecology:ClimateRegion named  ipcc_climatic_region
+//    using gis.points.collect(aggregate = [ ipcc_climatic_region ], aggregation = "dominant", cellradius?=5, circular = true);
+
+//This way, the vegetation carbon model can read both my landcover and my remapped climate zones
+
+
+//NOW RUNNING THE VEGETATION CARBON MODEL AND THE SOIL CARBON MODEL WITH THE FINAL OBJECTIVE OF MODELLING GLOBAL CARBON STORAGE
+
+//VEGETAION CARBON: For simplicity, after dragging & dropping your context, the land-cover type resolver and the smoothed ipcc climate region, run vegetation_carbon_stock directly from the gbf.aries.climate_regulation namespace in the un.gbf project (given that this project is private)
+
+
+//SECOND STEP OF TIER 1 CARBON: SOIL ORGANIC CARBON
+//In this first approach, a unique 2020 static layer for SOC is considered (later on we can decide if building and using a lookup table to introduce and use the same values for soil and dead organic matter carbon used in the InVEST Tier 1 run)
+//For now, the SOC model using a unique static layer is implemented taking point 7. and point 9. of the soc_change_by_landcover namespace of the elearning.exercise project
+//In 7., we changed the SOC reference from a 2017 source to a 2020 ISRIC that considers a 0-30cm depth and is 250m resolution (its name in the geoserver is the following: im-data-global-soil:isric_ocstha_m_30cm_tn_ha_250m_2020)
+//So, at the moment, the SOC is still not modelled as a function of landcover
+
+/*
+ * 7. Annotation of reference SOC mass (t/ha).
+ */
+model local:federico.cornacchia:natcaptriveneto:soc30 //2020 30 cm t/ha
+	as im:Reference soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha named soc_reference;
+
+//Then, to sum together the simulated vegetation carbon stock from the un.gbf model and the SOC reference, the following model is used
+//Note that to use the SOC reference in this model, im:Reference was added in the fourth line
+
+/*
+ * 9. To calculate the overall organic carbon stock (THIS SHOULD IN THEORY CONSIDER MY VEGETATION CARBON MODEL FROM UNGBF):
+ */	
+@intensive(space) 	
+model chemistry:Organic chemistry:Carbon im:Mass in t/ha
+	observing
+		@intensive(space)ecology:Vegetation chemistry:Carbon im:Mass in t/ha named vegetation_carbon_storage,
+		@intensive(space)im:Reference soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha named soil_carbon_storage
+	set to [vegetation_carbon_storage + soil_carbon_storage];      
+
+//STATIC biophysical carbon table
+//Simplest, basic, static account per landcover type
+define table vegetation_plus_soil_carbon_biophysical_supply_static as {
+	title: "Carbon storage supply by land cover type in given year",
+	label: "Carbon storage by land cover",
+	target: chemistry:Organic chemistry:Carbon im:Mass in t/ha
+	columns: ({ title: "{classifier}", target: chemistry:Organic chemistry:Carbon im:Mass, filter: landcover:LandCoverType, aggregation: sum }
+			  { title: "Total", summarize: sum, style: bold
+	}),
+	rows: { title: "Carbon storage {start}" } 
+};
+
+//model monetary value of ecology:Vegetation chemistry:Carbon im:Mass
+//     	observing
+//	@intensive(space)chemistry:Organic chemistry:Carbon im:Mass in t/ha named organic_carbon_storage
+//	set to [def scc = 100
+//		    return scc * organic_carbon_storage
+//	];
+
+//In the following model the value 179 is probably wrong because it in euros/tCO2 while the model outputs are in tons of elemental carbon (so a value of around 650 euros should be used)
+model monetary value of chemistry:Organic chemistry:Carbon im:Mass in EUR@2025
+     	observing
+	@intensive(space)chemistry:Organic chemistry:Carbon im:Mass in t/ha named organic_carbon_storage
+	set to [def scc = 179
+		    return scc * organic_carbon_storage
+	];
+
+//STATIC monetary carbon table
+//Simplest, basic, static account per landcover type
+define table vegetation_plus_soil_carbon_monetary_static as {
+	title: "Carbon monetary value by land cover type in given year",
+	label: "Carbon monetary value by land cover",
+	target: monetary value of chemistry:Organic chemistry:Carbon im:Mass in EUR@2025
+	columns: ({ title: "{classifier}", target: monetary value of chemistry:Organic chemistry:Carbon im:Mass, filter: landcover:LandCoverType, aggregation: sum }
+			  { title: "Total", summarize: sum, style: bold
+	}),
+	rows: { title: "Carbon value {start}" } 
+};
+
+ 

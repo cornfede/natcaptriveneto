@@ -1,0 +1,18 @@
+project private namespace natcaptriveneto.data;
+
+// Testing Triveneto 2018 LULC
+number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2018_250'
+		as trv_uso_ispra_2018;
+// Testing Triveneto 2023 LULC
+number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2023_250'
+		as trv_uso_ispra_2023;
+
+
+
+ 
+	
+ 
+	
+                           
+      
+               

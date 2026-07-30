@@ -1,0 +1,191 @@
+private namespace account.soilerosiontrv;
+
+//NOW FOCUSING ON THE SOIL EROSION ECOSYSTEM SERVICE
+//Below I paste the entire code of the soil.erosion namespace (RUSLE model) taken from the project im.aries.pyrenees
+//The entire code is pasted here so that the lookup tables can be shortened to cover only the LULC classes of interest for TRV
+
+//The C_FACTOR_TABLE_TRV was also adjusted with the same c_factor values used in the SDR InVEST model (since they were more appropriate for Europe)
+define C_FACTOR_TABLE_TRV as {{
+	
+	    land_cover_type                       | c_factor
+	-----------------------------------------------------
+	landcover:Forest                          | 0.0186,
+	landcover:MineralExtraction               | 0.1464,
+	landcover:Urban                           | 0,
+    landcover:ArableLand                      |	0.2346,
+    landcover:PermanentCropland               |	0.2006,
+    landcover:Pastureland                     | 0.0947,
+    landcover:HeterogeneousAgriculturalLand   | 0.1408,
+    landcover:SparseVegetation                |	0.0935,
+    landcover:WaterBody                       | 0,
+    landcover:Wetland                         | 0.18
+}};
+
+//For c_factor unvegetated, the original values present in the pyrenees project are kept (TO BE ADPATED TO TRV IF POSSIBLE)
+define C_FACTOR_TABLE_UNVEGETATED_TRV as {{
+	
+	    land_cover_type                       | c_factor
+	-----------------------------------------------------
+    landcover:ArtificialSurface               | 0.1,
+    landcover:Forest                          | 0.35,
+    landcover:ArableLand                      | 0.35,
+    landcover:PermanentCropland               | 0.35,
+    landcover:Pastureland                     | 0.35,
+    landcover:HeterogeneousAgriculturalLand   | 0.35,
+    landcover:SparseVegetation                |	0.35,
+    landcover:WaterBody                       | 0,
+    landcover:Wetland                         | 0.35
+}};
+
+//The P_FACTOR_TABLE_TRV was also adjusted with the same p_factor values used in the SDR InVEST model (since they were more appropriate for Europe)
+//NOTE: THE C AND P FACTORS VALUES TAKEN FROM THE PARALLEL INVEST APPLICATION  ARE VERY DIFFERENT FROM THE GLOBAL ONES ORIGINALLY USED BY THE RUSLE MODEL IN ARIES (WHY? ALSO COMPARE THAT WITH THE MORE LOCAL VALUES OF PYRENEES USED BY THE USPED MODEL)
+define P_FACTOR_TABLE_TRV as {{
+	
+	       land_cover_type                     | p_factor
+	------------------------------------------------------
+    landcover:Forest                           | 1,
+    landcover:MineralExtraction                | 1,
+    landcover:Urban                            | 1,
+    landcover:ArableLand                       | 0.9,
+    landcover:PermanentCropland                | 0.35,
+    landcover:Pastureland                      | 1,
+    landcover:HeterogeneousAgriculturalLand    | 0.9,
+    landcover:SparseVegetation                 | 1, //this value for SparseVegetation is super different to the original global one used by the model (why?)
+	landcover:WaterBody                        | 1,
+	landcover:Wetland                          | 1
+}};
+
+//For soil erodibility, instead of computing it using the general formula of the global model using sand, silt, clay and soil organic matter
+//we directly annotate and use a JRC European soil erodibility layer
+model local:rain80818:im.aries.pyrenees:aries_nbsoil_data.eu28_esdac_soil_erodibility_kfactor_500m_epsg3035_2014
+	as soil:SoilErodibility named k_factor;
+
+//At the same time, the JRC European layer for erosivity can be used (CONTROLLARE AL POSTO DI COSA INSERIRLO..FORSE AL POSTO DI NULLA, PUOI LASCIARLO COSì)
+model local:justus.muhando:im.aries.pyrenees:aries_pyrenees_data.eu_r_factor_epsg3035_500m_2010
+	as soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h) named r_factor;
+
+//To compute the LS factor (SlopeSteepnessAndLength) the model looks at slope, aspect and contributing area
+//Hence, I first need to derive these 3 characteristics from my desired input DEM for Triveneto
+//This is a model to compute the CONTRIBUTING AREA (for each cell, the total land area where rainwater flows downhill into that specific cell) from a starting DEM layer taken from the morphometry namespace of the im.components.geoprocessing project
+//As input, I provide the 10m resolution DEM of TRV
+//So, first I annotate the local 10m DEM for Triveneto
+model 'local:federico.cornacchia:natcaptriveneto:TRV_dem_10m_heavy'
+    as geography:Elevation in m;
+
+//Now the Contributing Area can be modeled (CHECK WHY THE CONRIBUTING AREA IS COMPUTED DIFFERENTLY IN THE USPED MODEL)
+@extensive(space)
+model hydrology:ContributingArea within hydrology:HydrologicallyCorrected hydrology:Watershed in m^2
+	observing geography:Elevation
+	using im.hydrology.leastcostflowdirections(dotca=true, areas=true);
+	
+model geography:Slope
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		geography:Elevation named elevation 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def rise_run = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.elevation + 2 * cell.e.elevation + cell.se.elevation) - (cell.nw.elevation + 2 * cell.w.elevation + cell.sw.elevation)) / (8 * space.height) 
+					dz_dy = ((cell.sw.elevation + 2 * cell.s.elevation + cell.se.elevation) - (cell.nw.elevation + 2 * cell.n.elevation + cell.ne.elevation)) / (8 * space.width)
+					rise_run = Math.sqrt(Math.pow(dz_dx,2) + Math.pow(dz_dy,2))
+					ret = Math.atan(rise_run) * 180 / Math.PI
+				}							
+				return ret			
+			]);
+			
+model geography:Aspect
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		geography:Elevation named elevation 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def aspect_rad = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.elevation + 2 * cell.e.elevation + cell.se.elevation) - (cell.nw.elevation + 2 * cell.w.elevation + cell.sw.elevation)) / 8 
+					dz_dy = ((cell.sw.elevation + 2 * cell.s.elevation + cell.se.elevation) - (cell.nw.elevation + 2 * cell.n.elevation + cell.ne.elevation)) / 8
+					aspect_rad = Math.atan2(dz_dy, -dz_dx)
+					ret = aspect_rad * 180 / Math.PI
+				}							
+				return ret			
+			]);
+
+
+//Now the SlopeSteepnessAndLength can be properly computed
+model soil:SlopeSteepnessAndLength named ls_factor_trv
+	observing
+		geography:Slope in degree_angle named slope_trv,
+		geography:Aspect in degree_angle named aspect_trv,
+		hydrology:ContributingArea in m^2 named contributing_area_trv
+	set to [
+		def theta = slope_trv * Math.PI / 180
+		def s_1 = 10.8 * Math.sin(theta) + 0.03
+		def s_2 = 16.8 * Math.sin(theta) - 0.5
+		def s = (theta < 0.09 ? s_1 : s_2)
+		def alpha = aspect_trv * Math.PI / 180
+		def x = Math.abs( Math.sin(alpha) ) + Math.abs( Math.cos(alpha) )
+		def beta = (Math.sin(theta) / 0.0986) / (3 * Math.pow( Math.sin(theta), 0.8) + 0.56)
+		def m = ( (theta <= 0.01) ? 0.2 : (
+					((theta > 0.01) && (theta <= 0.035)) ? 0.3 : (
+						((theta > 0.035) && (theta <= 0.05)) ? 0.4 : (
+							((theta > 0.05) && (theta <= 0.09)) ? 0.5 : 
+								(beta / (1 + beta))
+							)
+						)
+					)		
+				)
+		def l_temp = ( Math.pow( (contributing_area_trv + Math.pow(space.width, 2)), m+1 ) - Math.pow(contributing_area_trv, m+1) ) / 
+					 ( Math.pow(space.width, m+2) * Math.pow(x, m) * Math.pow(22.13, m) )
+		def l = ((l_temp > 333) ? 333 : l_temp)
+		return s * l
+	];
+ 
+model soil:CoverManagement
+    observing landcover:LandCoverType named lct
+    lookup (lct) into C_FACTOR_TABLE_TRV;
+
+model soil:CoverManagement caused by ecology:Vegetation
+    observing landcover:LandCoverType named lct
+    lookup (lct) into C_FACTOR_TABLE_UNVEGETATED_TRV;
+    
+model soil:SupportPractice
+    observing landcover:LandCoverType named lct
+    lookup (lct) into P_FACTOR_TABLE_TRV;
+
+@intensive(space)
+model im:Potential (im:Removed soil:Soil im:Mass) in t/ha named soil_erosion_trv
+	observing
+		soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h) named r_factor,
+		soil:SoilErodibility 		                   named k_factor, //(T*ha*h)/(ha*MJ*mm)				    
+		soil:SlopeSteepnessAndLength 				   named ls_factor,
+		soil:CoverManagement 						   named c_factor,
+		soil:SupportPractice 						   named p_factor
+	set to [(r_factor * k_factor * ls_factor * c_factor * p_factor)];
+
+@intensive(space)
+model im:Retained soil:Soil im:Mass caused by ecology:Vegetation in t/ha named soil_retention_trv
+	observing
+		soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h)    named r_factor,
+		soil:SoilErodibility 						      named k_factor, 
+		soil:SlopeSteepnessAndLength 				      named ls_factor,
+		soil:CoverManagement 						      named c_factor,
+		soil:CoverManagement caused by ecology:Vegetation named c_factor_unvegetated,
+		soil:SupportPractice 						      named p_factor
+	set to [
+		def rusle = (r_factor * k_factor * ls_factor * c_factor * p_factor)
+		def ruslv = (r_factor * k_factor * ls_factor * c_factor_unvegetated)
+		def delta = ruslv - rusle
+		return ((delta < 0) ? 0 : delta)
+	];
+	
+

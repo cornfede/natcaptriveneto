@@ -1,58 +1,250 @@
-private namespace account.soilerosiontrv;
+private namespace account.soilerosiontrv
+        using pyrenees.soil.erosion.usped,
+              (flow_directions_d8) from components.geoprocessing.morphometry;
 
 //NOW FOCUSING ON THE SOIL EROSION ECOSYSTEM SERVICE
 //Below I paste the entire code of the soil.erosion namespace (RUSLE model) taken from the project im.aries.pyrenees
 //The entire code is pasted here so that the lookup tables can be shortened to cover only the LULC classes of interest for TRV
 
 //The C_FACTOR_TABLE_TRV was also adjusted with the same c_factor values used in the SDR InVEST model (since they were more appropriate for Europe)
+//define C_FACTOR_TABLE_TRV as {{
+	
+//	    land_cover_type                       | c_factor
+//	-----------------------------------------------------
+//	landcover:Forest                          | 0.0186,
+//	landcover:MineralExtraction               | 0.1464,
+//	landcover:Urban                           | 0,
+//   landcover:ArableLand                      |	0.2346,
+//    landcover:PermanentCropland               |	0.2006,
+//    landcover:Pastureland                     | 0.0947,
+//    landcover:HeterogeneousAgriculturalLand   | 0.1408,
+//    landcover:SparseVegetation                |	0.0935,
+//    landcover:WaterBody                       | 0,
+//    landcover:Wetland                         | 0.18
+//}};
+
+// PROVISIONAL C-FACTOR LOOKUP
+// Used only for preliminary testing and comparison.
+// Crop values approximate the LANDUM/JRC crop factors after applying
+// the average European management multiplier: 1 - 0.191 = 0.809.
+
 define C_FACTOR_TABLE_TRV as {{
 	
-	    land_cover_type                       | c_factor
-	-----------------------------------------------------
-	landcover:Forest                          | 0.0186,
-	landcover:MineralExtraction               | 0.1464,
-	landcover:Urban                           | 0,
-    landcover:ArableLand                      |	0.2346,
-    landcover:PermanentCropland               |	0.2006,
-    landcover:Pastureland                     | 0.0947,
-    landcover:HeterogeneousAgriculturalLand   | 0.1408,
-    landcover:SparseVegetation                |	0.0935,
-    landcover:WaterBody                       | 0,
-    landcover:Wetland                         | 0.18
+	    land_cover_type                  | c_factor
+	------------------------------------------------
+	
+	// FORESTS
+	// Italian JRC/LANDUM mean forest value.
+	landcover:ConiferousForest            | 0.0013,
+	landcover:BroadleafForest             | 0.0013,
+	
+	// ARTIFICIAL AND URBAN CLASSES
+	// Mineral extraction retains the previous provisional value.
+	landcover:MineralExtraction           | 0.1464,
+	landcover:Urban                       | 0,
+	
+	// Italian natural-grassland value used as a proxy for urban parks.
+	landcover:UrbanPark                   | 0.0416,
+	
+	landcover:WaterBody                   | 0,
+	
+	// CEREALS
+	// Wheat: 0.20 * 0.809
+	landcover:Wheat                       | 0.1618,
+	
+	// Proxy based on the mean of barley and other common cereals:
+	// approximately 0.205 * 0.809
+	landcover:Cereals                     | 0.1658,
+	
+	// Maize: 0.38 * 0.809
+	landcover:Maize                       | 0.3074,
+	
+	// Rice: 0.15 * 0.809
+	landcover:RiceField                   | 0.1214,
+	
+	// OTHER ANNUAL CROPS
+	// No direct value is provided in the original JRC crop table.
+	// Previous general arable-land value retained as proxy.
+	landcover:Vegetable                   | 0.2346,
+	
+	// Dry pulses: 0.32 * 0.809
+	landcover:Bean                        | 0.2589,
+	
+	// Potato: 0.34 * 0.809
+	landcover:Potato                      | 0.2751,
+	
+	// Sugar beet: 0.34 * 0.809
+	landcover:Beet                        | 0.2751,
+	
+	// Mean proxy for sunflower and rapeseed:
+	// ((0.32 + 0.30) / 2) * 0.809
+	landcover:OilseedLegume               | 0.2508,
+	
+	// Soybean: 0.28 * 0.809
+	landcover:Soybean                     | 0.2265,
+	
+	// Proxy for the aggregated flax-cotton-hemp class.
+	// It is intentionally closer to linseed/hemp than to cotton,
+	// because cotton is expected to have a limited role in TRV.
+	landcover:Cotton                      | 0.2400,
+	
+	// GENERAL ARABLE LAND
+	// Mean final C-factor for Italian arable land from LANDUM.
+	landcover:ArableLand                  | 0.2110,
+	
+	// GRASSLAND AND PASTURES
+	// Italian LANDUM value for natural grassland.
+	landcover:Grassland                   | 0.0416,
+	
+	// Italian LANDUM value for pastures.
+	landcover:Pastureland                 | 0.0988,
+	
+	// PERMANENT CROPS
+	// Equal-weight provisional mean of:
+	// Italian vineyards 0.3454,
+	// fruit/nuts proxy 0.2188,
+	// Italian olive groves 0.2163.
+	landcover:PermanentCropland           | 0.2500,
+	
+	// WETLANDS
+	// Excluded operationally from sheet and rill erosion.
+	landcover:Wetland                     | 0,
+	
+	// MIXED BARE ROCK / BARE SOIL
+	// Italian sparse-vegetation value used as operational proxy.
+	landcover:BareArea                    | 0.2509
 }};
 
 //For c_factor unvegetated, the original values present in the pyrenees project are kept (TO BE ADPATED TO TRV IF POSSIBLE)
+//define C_FACTOR_TABLE_UNVEGETATED_TRV as {{
+	
+//	    land_cover_type                       | c_factor
+//	-----------------------------------------------------
+//   landcover:ArtificialSurface               | 0.1,
+//    landcover:Forest                          | 0.35,
+//    landcover:ArableLand                      | 0.35,
+//    landcover:PermanentCropland               | 0.35,
+//    landcover:Pastureland                     | 0.35,
+//    landcover:HeterogeneousAgriculturalLand   | 0.35,
+//    landcover:SparseVegetation                |	0.35,
+//    landcover:WaterBody                       | 0,
+//    landcover:Wetland                         | 0.35
+//}};
+
+// PROVISIONAL C-FACTOR FOR THE COUNTERFACTUAL
+// WITHOUT VEGETATION.
+//
+// C = 1 is the standard RUSLE bare-soil reference.
+// Already non-vegetated or excluded classes retain their actual value
+// so that they do not produce a fictitious vegetation-retention service.
+
 define C_FACTOR_TABLE_UNVEGETATED_TRV as {{
 	
-	    land_cover_type                       | c_factor
-	-----------------------------------------------------
-    landcover:ArtificialSurface               | 0.1,
-    landcover:Forest                          | 0.35,
-    landcover:ArableLand                      | 0.35,
-    landcover:PermanentCropland               | 0.35,
-    landcover:Pastureland                     | 0.35,
-    landcover:HeterogeneousAgriculturalLand   | 0.35,
-    landcover:SparseVegetation                |	0.35,
-    landcover:WaterBody                       | 0,
-    landcover:Wetland                         | 0.35
+	    land_cover_type                  | c_factor
+	------------------------------------------------
+	
+	// FORESTS
+	landcover:ConiferousForest            | 1,
+	landcover:BroadleafForest             | 1,
+	
+	// ARTIFICIAL AND URBAN CLASSES
+	// No vegetation-retention service attributed to mining or settlements.
+	landcover:MineralExtraction           | 0.1464,
+	landcover:Urban                       | 0,
+	
+	// Urban parks are treated as vegetated areas.
+	landcover:UrbanPark                   | 1,
+	
+	landcover:WaterBody                   | 0,
+	
+	// AGRICULTURAL VEGETATION
+	landcover:Wheat                       | 1,
+	landcover:Cereals                     | 1,
+	landcover:Maize                       | 1,
+	landcover:RiceField                   | 1,
+	landcover:Vegetable                   | 1,
+	landcover:Bean                        | 1,
+	landcover:Potato                      | 1,
+	landcover:Beet                        | 1,
+	landcover:OilseedLegume               | 1,
+	landcover:Soybean                     | 1,
+	landcover:Cotton                      | 1,
+	landcover:ArableLand                  | 1,
+	
+	// GRASSLAND AND PERMANENT CROPS
+	landcover:Grassland                   | 1,
+	landcover:PermanentCropland           | 1,
+	landcover:Pastureland                 | 1,
+	
+	// EXCLUDED OR ALREADY NON-UPLAND CLASSES
+	landcover:Wetland                     | 0,
+	
+	// The mixed bare-rock/bare-soil class is not considered
+	// to provide a vegetation-retention service at this stage.
+	landcover:BareArea                    | 0.2509
 }};
 
 //The P_FACTOR_TABLE_TRV was also adjusted with the same p_factor values used in the SDR InVEST model (since they were more appropriate for Europe)
 //NOTE: THE C AND P FACTORS VALUES TAKEN FROM THE PARALLEL INVEST APPLICATION  ARE VERY DIFFERENT FROM THE GLOBAL ONES ORIGINALLY USED BY THE RUSLE MODEL IN ARIES (WHY? ALSO COMPARE THAT WITH THE MORE LOCAL VALUES OF PYRENEES USED BY THE USPED MODEL)
+//define P_FACTOR_TABLE_TRV as {{
+	
+//	       land_cover_type                     | p_factor
+//	------------------------------------------------------
+//    landcover:Forest                           | 1,
+//    landcover:MineralExtraction                | 1,
+//    landcover:Urban                            | 1,
+//    landcover:ArableLand                       | 0.9,
+//    landcover:PermanentCropland                | 0.35,
+//    landcover:Pastureland                      | 1,
+//    landcover:HeterogeneousAgriculturalLand    | 0.9,
+//    landcover:SparseVegetation                 | 1, //this value for SparseVegetation is super different to the original global one used by the model (why?)
+//	landcover:WaterBody                        | 1,
+//	landcover:Wetland                          | 1
+//}};
+
+// PROVISIONAL P-FACTOR LOOKUP
+//
+// P = 0.95 is used as a broad Italian/European agricultural proxy.
+// P = 1 means that no specific erosion-control support practice
+// is explicitly represented.
+
 define P_FACTOR_TABLE_TRV as {{
 	
-	       land_cover_type                     | p_factor
-	------------------------------------------------------
-    landcover:Forest                           | 1,
-    landcover:MineralExtraction                | 1,
-    landcover:Urban                            | 1,
-    landcover:ArableLand                       | 0.9,
-    landcover:PermanentCropland                | 0.35,
-    landcover:Pastureland                      | 1,
-    landcover:HeterogeneousAgriculturalLand    | 0.9,
-    landcover:SparseVegetation                 | 1, //this value for SparseVegetation is super different to the original global one used by the model (why?)
-	landcover:WaterBody                        | 1,
-	landcover:Wetland                          | 1
+	    land_cover_type                  | p_factor
+	------------------------------------------------
+	
+	// FORESTS
+	landcover:ConiferousForest            | 1,
+	landcover:BroadleafForest             | 1,
+	
+	// ARTIFICIAL AND URBAN CLASSES
+	landcover:MineralExtraction           | 1,
+	landcover:Urban                       | 1,
+	landcover:UrbanPark                   | 1,
+	landcover:WaterBody                   | 1,
+	
+	// ARABLE CROPS
+	landcover:Wheat                       | 0.95,
+	landcover:Cereals                     | 0.95,
+	landcover:Maize                       | 0.95,
+	landcover:RiceField                   | 0.95,
+	landcover:Vegetable                   | 0.95,
+	landcover:Bean                        | 0.95,
+	landcover:Potato                      | 0.95,
+	landcover:Beet                        | 0.95,
+	landcover:OilseedLegume               | 0.95,
+	landcover:Soybean                     | 0.95,
+	landcover:Cotton                      | 0.95,
+	landcover:ArableLand                  | 0.95,
+	
+	// OTHER AGRICULTURAL CLASSES
+	landcover:Grassland                   | 0.95,
+	landcover:PermanentCropland           | 0.95,
+	landcover:Pastureland                 | 0.95,
+	
+	// WETLANDS AND BARE AREAS
+	landcover:Wetland                     | 1,
+	landcover:BareArea                    | 1
 }};
 
 //For soil erodibility, instead of computing it using the general formula of the global model using sand, silt, clay and soil organic matter
@@ -69,7 +261,7 @@ model local:justus.muhando:im.aries.pyrenees:aries_pyrenees_data.eu_r_factor_eps
 //This is a model to compute the CONTRIBUTING AREA (for each cell, the total land area where rainwater flows downhill into that specific cell) from a starting DEM layer taken from the morphometry namespace of the im.components.geoprocessing project
 //As input, I provide the 10m resolution DEM of TRV
 //So, first I annotate the local 10m DEM for Triveneto
-model 'local:federico.cornacchia:natcaptriveneto:TRV_dem_10m_heavy'
+model 'local:federico.cornacchia:natcaptriveneto:TRV_dem_10m_compressed'
     as geography:Elevation in m;
 
 //Now the Contributing Area can be modeled (CHECK WHY THE CONRIBUTING AREA IS COMPUTED DIFFERENTLY IN THE USPED MODEL)
@@ -98,7 +290,7 @@ model geography:Slope
 				}							
 				return ret			
 			]);
-			
+
 model geography:Aspect
 	observing
 		hydrology:StreamOutlet,
@@ -119,8 +311,8 @@ model geography:Aspect
 				}							
 				return ret			
 			]);
-
-
+ 
+ 
 //Now the SlopeSteepnessAndLength can be properly computed
 model soil:SlopeSteepnessAndLength named ls_factor_trv
 	observing
@@ -172,6 +364,8 @@ model im:Potential (im:Removed soil:Soil im:Mass) in t/ha named soil_erosion_trv
 		soil:SupportPractice 						   named p_factor
 	set to [(r_factor * k_factor * ls_factor * c_factor * p_factor)];
 
+
+//In the retention formula below (RUSLV), the p_factor is missing; WHY? LOGIC TO BE ASKED
 @intensive(space)
 model im:Retained soil:Soil im:Mass caused by ecology:Vegetation in t/ha named soil_retention_trv
 	observing
@@ -183,7 +377,7 @@ model im:Retained soil:Soil im:Mass caused by ecology:Vegetation in t/ha named s
 		soil:SupportPractice 						      named p_factor
 	set to [
 		def rusle = (r_factor * k_factor * ls_factor * c_factor * p_factor)
-		def ruslv = (r_factor * k_factor * ls_factor * c_factor_unvegetated)
+		def ruslv = (r_factor * k_factor * ls_factor * c_factor_unvegetated) 
 		def delta = ruslv - rusle
 		return ((delta < 0) ? 0 : delta)
 	];

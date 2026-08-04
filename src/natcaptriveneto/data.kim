@@ -1,5 +1,5 @@
 project private namespace natcaptriveneto.data
-using nca.ecology.ipcc;
+using nca.ecology.ipcc, nca.landuse.ipcc;
 
 // Testing Triveneto 2018 LULC
 number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2018_250'
@@ -15,11 +15,14 @@ model local:justus.muhando:im.data.global:im-data-global-climate.triveneto_zone_
 	nca.ecology.ipcc:ColdTemperateWet if 2,
  	nca.ecology.ipcc:PolarMoist if 3;
 
-model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018,
-local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2023 
+
+
+model 
+//	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018,
+	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2023 
 as landcover:LandCoverType classified into
-	landcover:ConiferousForest if 211,
-	landcover:BroadleafForest if 221,
+	landcover:ConiferousForest if in (211 212 213),
+	landcover:BroadleafForest if in (221 222 223),
 	landcover:MineralExtraction if 300,
 	landcover:Urban if 401,
 	landcover:UrbanPark if 403,
@@ -38,17 +41,32 @@ as landcover:LandCoverType classified into
 	landcover:Cotton if 1440,
 	landcover:Grassland if 1500,
 	landcover:ArableLand if 1600,
+	landcover:PermanentCropland if 2100,
 	landcover:Vineyard if 2100,
 	landcover:FruitBerryPlantation if 2100,
 	landcover:OliveGrove if 2100,
 	landcover:NutOrchard if 2100,
 	landcover:Pastureland if 3100,
-	landcover:Wetland if 6101,
+	landcover:Wetland if in (6101 6102),
 	landcover:BareRock if 6201;
+
+
+
+
+@colormap(values = {
+	nca.landuse.ipcc:OldSecondaryForest: (15 60 15)
+	nca.landuse.ipcc:YoungSecondaryForest: (22 92 22)
+}) 
+model 
+ 	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018,
+	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2023 
+as //type of nca.landuse.ipcc:LandUseType classified into
+	nca.landuse.ipcc:LandUseType classified into
+	nca.landuse.ipcc:OldSecondaryForest if in (212 221),
+	nca.landuse.ipcc:YoungSecondaryForest if in (212 222);	
  
-	
- 
-	
+number 
+	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018 as test;	
                            
       
                

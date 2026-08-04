@@ -2,7 +2,7 @@ project private namespace natcaptriveneto.analysiscontext;
 
 // Triveneto AOI
 observe earth:Region named trv_aoi    
-    over space (urn = 'local:federico.cornacchia:natcaptriveneto:TRV_boundary_4326',
+    over space (urn = 'local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326',
                 grid= "250 m",
                projection= "EPSG:4326"), 
 //         time(start=2018, end=2024, step=1.year);
@@ -14,7 +14,6 @@ observe earth:Region named trv_aoi
 //                grid= "30 m",
 //                projection= "EPSG:4326"), 
 //         time(start=2018, end=2024, step=1.year);
-//         time(year=2023);
-         
+//         time(year=2023);     
          
          

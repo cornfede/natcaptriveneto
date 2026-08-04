@@ -1,0 +1,195 @@
+private namespace account.carbon_stock_trv
+using nca.landuse.ipcc, nca.ecology.ipcc;
+
+abstract attribute GroundRelativePosition
+    "Describes the vertical placement of a physical entity relative to the Earth's soil surface."
+    has disjoint children
+        (AboveGround
+            "Located entirely or primarily on or above the soil surface."
+        ),
+        (BelowGround
+            "Located entirely or primarily beneath the soil surface."
+        );
+
+// Could go in ecology
+quantity AboveGroundBiomass
+    "The total mass of living biological organisms located above the soil surface in a given area."
+    is AboveGround biology:Biomass within ecology:Vegetation earth:Region;
+//    is earth:AboveGround biology:Biomass within ecology:Vegetation earth:Region;
+
+mass BelowGroundBiomass
+    "The total mass of living biological organisms (typically roots) located beneath the soil surface."
+    is BelowGround biology:Biomass within ecology:Vegetation earth:Region;
+    
+define TRIVENETO_CARBON_POOLS_TABLE as {{
+  landcover                      | forest_type                           | ipcc_climatic_region         	 | c_above | c_below | c_dead
+  ---------------------------------------------------------------------------------------------------------------------------------------
+  landcover:ConiferousForest     | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:WarmTemperateWet | 72.333  | 14.901  | 27.2   ,
+  landcover:ConiferousForest     | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:WarmTemperateDry | 72.333  | 14.901  | 27.2   ,
+  landcover:ConiferousForest     | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:ColdTemperateWet | 100.909 | 34.309  | 52     ,
+  landcover:ConiferousForest     | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:PolarMoist       | 100.909 | 34.309  | 52     ,
+  landcover:ConiferousForest     | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:WarmTemperateWet | 10.481  | 3.763   | 27.2   ,
+  landcover:ConiferousForest     | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:WarmTemperateDry | 10.481  | 3.763   | 27.2   ,
+  landcover:ConiferousForest     | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:ColdTemperateWet | 13.066  | 4.442   | 52     ,
+  landcover:ConiferousForest     | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:PolarMoist       | 13.066  | 4.442   | 52     ,
+  landcover:ConiferousForest     | #                                     | nca.ecology.ipcc:WarmTemperateWet | 41.407  | 14.865  | 27.2   ,
+  landcover:ConiferousForest     | #                                     | nca.ecology.ipcc:WarmTemperateDry | 41.407  | 14.865  | 27.2   ,
+  landcover:ConiferousForest     | #                                     | nca.ecology.ipcc:ColdTemperateWet | 56.987  | 19.376  | 52     ,
+  landcover:ConiferousForest     | #                                     | nca.ecology.ipcc:PolarMoist       | 56.987  | 19.376  | 52     ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:WarmTemperateWet | 72.333  | 12.441  | 43.4   ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:WarmTemperateDry | 72.333  | 12.441  | 43.4   ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:ColdTemperateWet | 100.909 | 48.134  | 24.6   ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:OldSecondaryForest   | nca.ecology.ipcc:PolarMoist       | 100.909 | 48.134  | 24.6   ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:WarmTemperateWet | 10.481  | 2.012   | 43.4   ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:WarmTemperateDry | 10.481  | 2.012   | 43.4   ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:ColdTemperateWet | 13.066  | 6.232   | 24.6   ,
+  landcover:BroadleafForest      | nca.landuse.ipcc:YoungSecondaryForest | nca.ecology.ipcc:PolarMoist       | 13.066  | 6.232   | 24.6   ,
+  landcover:BroadleafForest      | #                                     | nca.ecology.ipcc:WarmTemperateWet | 41.407  | 7.95    | 43.4   ,
+  landcover:BroadleafForest      | #                                     | nca.ecology.ipcc:WarmTemperateDry | 41.407  | 7.95    | 43.4   ,
+  landcover:BroadleafForest      | #                                     | nca.ecology.ipcc:ColdTemperateWet | 56.987  | 27.183  | 24.6   ,
+  landcover:BroadleafForest      | #                                     | nca.ecology.ipcc:PolarMoist       | 56.987  | 27.183  | 24.6   ,
+  landcover:MineralExtraction    | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:MineralExtraction    | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:MineralExtraction    | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:MineralExtraction    | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Urban                | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Urban                | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Urban                | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Urban                | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:UrbanPark            | #                                     | nca.ecology.ipcc:WarmTemperateWet | 1.27    | 5.08    | 0      ,
+  landcover:UrbanPark            | #                                     | nca.ecology.ipcc:WarmTemperateDry | 1.27    | 5.08    | 0      ,
+  landcover:UrbanPark            | #                                     | nca.ecology.ipcc:ColdTemperateWet | 1.27    | 5.08    | 0      ,
+  landcover:UrbanPark            | #                                     | nca.ecology.ipcc:PolarMoist       | 1.27    | 5.08    | 0      ,
+  landcover:WaterBody            | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:WaterBody            | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:WaterBody            | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:WaterBody            | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Wheat                | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Wheat                | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Wheat                | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Wheat                | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Cereals              | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Cereals              | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Cereals              | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Cereals              | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Maize                | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Maize                | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Maize                | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Maize                | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:RiceField            | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:RiceField            | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:RiceField            | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:RiceField            | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Vegetable            | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Vegetable            | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Vegetable            | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Vegetable            | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:DryPulse             | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:DryPulse             | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:DryPulse             | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:DryPulse             | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Potato               | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Potato               | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Potato               | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Potato               | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Beet                 | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Beet                 | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Beet                 | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Beet                 | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Sunflower            | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Sunflower            | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Sunflower            | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Sunflower            | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Soybean              | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Soybean              | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Soybean              | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Soybean              | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Rapeseed             | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Rapeseed             | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Rapeseed             | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Rapeseed             | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Cotton               | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Cotton               | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Cotton               | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Cotton               | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Grassland            | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0.803   | 3.213   | 0      ,
+  landcover:Grassland            | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0.803   | 3.213   | 0      ,
+  landcover:Grassland            | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0.803   | 3.213   | 0      ,
+  landcover:Grassland            | #                                     | nca.ecology.ipcc:PolarMoist       | 0.803   | 3.213   | 0      ,
+  landcover:ArableLand           | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:ArableLand           | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:ArableLand           | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:ArableLand           | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:PermanentCropland    | #                                     | #								 | 5.625   | 0       | 0      ,
+  landcover:Vineyard             | #                                     | #								 | 5.625   | 0       | 0      ,
+  landcover:FruitBerryPlantation | #                                     | #								 | 5.625   | 0       | 0      ,
+  landcover:OliveGrove           | #                                     | #								 | 5.625   | 0       | 0      ,
+  landcover:NutOrchard           | #                                     | #								 | 5.625   | 0       | 0      ,
+  landcover:PermanentCropland    | #                                     | #								 | 5.625   | 0       | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:WarmTemperateDry | 1.27    | 5.08    | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:WarmTemperateWet | 1.27    | 5.08    | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:ColdTemperateWet | 1.27    | 5.08    | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:PolarMoist       | 1.27    | 5.08    | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:Wetland              | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:BareRock             | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
+  landcover:BareRock             | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
+  landcover:BareRock             | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
+  landcover:BareRock             | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0     
+}};
+
+@intensive(space)
+model chemistry:Carbon AboveGround im:Mass in t/ha
+	observing
+	landcover:LandCoverType named landcover,
+	nca.landuse.ipcc:LandUseType named forest_type, 
+	type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region
+lookup (landcover, forest_type, ipcc_climatic_region, ? , * ,* ) into TRIVENETO_CARBON_POOLS_TABLE
+	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+
+
+@intensive(space)
+model chemistry:Carbon BelowGround im:Mass in t/ha
+	observing
+	landcover:LandCoverType named landcover,
+	nca.landuse.ipcc:LandUseType named forest_type, 
+	type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region
+lookup (landcover, forest_type, ipcc_climatic_region, * , ? ,* ) into TRIVENETO_CARBON_POOLS_TABLE
+	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+
+@intensive(space)
+model chemistry:Organic chemistry:Carbon im:Mass caused by ecology.incubation:Litterfall in t/ha
+	observing
+	landcover:LandCoverType named landcover,
+	nca.landuse.ipcc:LandUseType named forest_type, 
+	type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region
+lookup (landcover, forest_type, ipcc_climatic_region, * , * ,? ) into TRIVENETO_CARBON_POOLS_TABLE
+	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+
+
+//@intensive(space)
+//model soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha
+//	observing
+//	landcover:LandCoverType named landcover,
+//	nca.landuse.ipcc:LandUseType named forest_type, 
+//	type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region
+//lookup (landcover, *, *,*,*,? ) into TRIVENETO_CARBON_POOLS_TABLE // add column for SOC estimates using lookup
+//	over space(shape="EPSG:4326 MULTIPOLYGON (((-8.8012325 41.9113484, -8.6359301 42.0478741, -8.1987535 42.1543112, -8.1821709 42.065109, -8.0844552 42.0473336, -8.2168993 41.9131548, -8.1309028 41.8088605, -7.9063431 41.9270958, -7.8728052 41.8448547, -7.7008515 41.9076656, -7.5858733 41.8818712, -7.6114563 41.829178, -7.4524993 41.8650817, -7.4278996 41.8073642, -7.1967378 41.8799794, -7.1414588 41.9907578, -6.5883071 41.9675665, -6.5155141 41.8716585, -6.5482737 41.6855954, -6.302297 41.6618119, -6.1891593 41.5748318, -6.3176604 41.3857422, -6.6483775 41.2475503, -6.808931 41.0364965, -6.9313566 41.0294111, -6.8019213 40.8607148, -6.8453574 40.565954, -6.7952681 40.5113686, -6.8496927 40.4515196, -6.7809607 40.3645563, -7.0299725 40.1863898, -6.8637851 40.0120092, -7.0155162 39.6704277, -7.5416802 39.6636796, -7.294261 39.4568276, -7.2414598 39.2082552, -6.9594164 39.0544706, -7.0392438 38.8646812, -7.2594205 38.724199, -7.3358476 38.4358199, -7.0853373 38.1692985, -6.931521 38.2083074, -7.002008 38.0223914, -7.2624329 37.9798556, -7.5224755 37.5565695, -7.3862731 36.9747253, -7.8517872 36.7667399, -8.9625202 36.7124999, -9.1638712 36.7901489, -9.2659302 37.0418399, -9.1664732 37.8997709, -9.7759342 38.7572879, -9.8224182 39.5386119, -9.1698132 40.2756819, -9.0398402 40.6728259, -9.0669032 41.4583789, -9.1567315 41.8726126, -8.8012325 41.9113484)), ((-16.0506725 29.828247, -16.2561294 29.9364944, -16.2451863 30.1597283, -15.9502251 30.3508073, -15.7165209 30.3111737, -15.6266867 30.1763196, -15.6567937 30.0355015, -16.0506725 29.828247)), ((-17.5034205 32.8332586, -17.4393745 32.9520686, -17.2174035 33.0768066, -16.6257605 32.9489316, -16.5701945 33.2095936, -16.3484025 33.3192956, -16.1644125 33.3019136, -16.0454245 33.1673446, -16.0929995 32.9197166, -16.4152245 32.7935546, -16.2269595 32.4064836, -16.2736465 32.2821666, -16.3996015 32.2075826, -16.5528965 32.2133906, -17.2388365 32.5073476, -17.4328325 32.6483526, -17.5034205 32.8332586)), ((-25.0421406 36.7273558, -25.3735415 36.8210352, -26.0638875 37.7269566, -26.0876455 37.8813266, -25.9586885 38.0606216, -25.7884815 38.1094936, -25.1366565 38.0583966, -24.9112795 37.9213016, -24.5317463 37.2416209, -24.8295809 36.7937806, -25.0421406 36.7273558)), ((-29.0939805 38.6197546, -28.9559995 38.7777996, -28.2955105 38.9591686, -28.3024535 39.1698486, -28.0364775 39.3075316, -27.8386205 39.2526506, -27.6991835 39.1064176, -27.7026855 38.9201576, -27.8780655 38.8106386, -27.6415515 38.7177676, -27.5409915 38.9370586, -27.2285215 39.0041786, -26.8848745 38.9023576, -26.7598055 38.6947136, -26.8499305 38.5223226, -27.0124855 38.4240776, -27.5081055 38.5165616, -27.5931945 38.3874516, -27.8987155 38.2356446, -28.2365375 38.1785266, -28.5255935 38.1945996, -28.8930805 38.3509096, -29.0579085 38.4922736, -29.0939805 38.6197546)), ((-31.5429324 39.5091025, -31.2439582 39.901676, -31.0270979 39.914529, -30.8663033 39.7846578, -30.8636385 39.377891, -31.0439862 39.181234, -31.4216604 39.1960297, -31.5399992 39.3499376, -31.5429324 39.5091025)))");
+
+
+@intensive(space)
+model chemistry:Carbon im:Mass in t/ha
+	observing
+	chemistry:Carbon AboveGround im:Mass in t/ha named above_ground_biomass,
+	chemistry:Carbon BelowGround im:Mass in t/ha named below_ground_biomass,
+	soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha named soil_carbon_mass,
+	chemistry:Organic chemistry:Carbon im:Mass caused by ecology.incubation:Litterfall in t/ha named litter_biomass
+set to [above_ground_biomass + below_ground_biomass + soil_carbon_mass + litter_biomass]
+	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+

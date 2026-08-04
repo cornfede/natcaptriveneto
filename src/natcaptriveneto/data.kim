@@ -1,4 +1,5 @@
-project private namespace natcaptriveneto.data;
+project private namespace natcaptriveneto.data
+using nca.ecology.ipcc;
 
 // Testing Triveneto 2018 LULC
 number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2018_250'
@@ -7,8 +8,14 @@ number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2018_250'
 number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2023_250'
 		as trv_uso_ispra_2023;
 
+model local:justus.muhando:im.data.global:im-data-global-climate.triveneto_zone_clima_250m_epsg3035
+	as type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region classified into
+	nca.ecology.ipcc:WarmTemperateWet if 0,
+	nca.ecology.ipcc:WarmTemperateDry if 1,
+	nca.ecology.ipcc:ColdTemperateWet if 2,
+ 	nca.ecology.ipcc:PolarMoist if 3;
 
-
+number local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018 as test_lc;
  
 	
  

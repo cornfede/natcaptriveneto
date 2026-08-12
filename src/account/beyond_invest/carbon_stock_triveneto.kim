@@ -1,4 +1,4 @@
-private namespace account.carbon_stock_trv
+private namespace account.beyond_invest.carbon_stock_triveneto
 using nca.landuse.ipcc, nca.ecology.ipcc;
 
 abstract attribute GroundRelativePosition

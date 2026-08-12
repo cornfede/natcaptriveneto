@@ -68,5 +68,6 @@ as //type of nca.landuse.ipcc:LandUseType classified into
 number 
 	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018 as test;	
                            
-      
+model local:justus.muhando:im.data.global:im-data-global-soil.triveneto_soc_stock_t_ha_250m_epsg3035
+ as soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha;       
                

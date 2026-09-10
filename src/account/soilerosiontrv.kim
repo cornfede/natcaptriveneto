@@ -1,4 +1,5 @@
-private namespace account.soilerosiontrv;
+private namespace account.soilerosiontrv
+            using (C_FACTOR_TABLE_TRV, C_FACTOR_TABLE_UNVEGETATED_TRV, P_FACTOR_TABLE_TRV) from natcaptriveneto.tables.soilerosion;
 
 // -----------------------------------------------------------------------------
 // RUSLE BIOPHYSICAL PARAMETERS FOR TRIVENETO
@@ -10,160 +11,12 @@ private namespace account.soilerosiontrv;
 //TODO:move tables in dedicated namespace and call them from there
 //TODO:Integrate the watershed boundary if we end up using USPED methodology
 
-
-define C_FACTOR_TABLE_TRV as {{
-	
-	    land_cover_type                  | c_factor
-	------------------------------------------------
-	
-	landcover:ConiferousForest            | 0.0116, // TRV: 211 old + 212 young + 213 altro; simple mean
-	landcover:BroadleafForest             | 0.0320, // TRV: 221 old + 222 young + 223 altro; simple mean
-	
-	landcover:MineralExtraction           | 0.1666, // TRV: 300 MineralExtraction
-	landcover:Urban                       | 0,      // TRV: 401 Settlements
-	landcover:UrbanPark                   | 0.1872, // TRV: 403 Urban parks
-	landcover:WaterBody                   | 0,      // TRV: 500 WaterBody
-	
-	// Specific annual crops
-	landcover:Wheat                       | 0.2430, // TRV: 1110 Wheat
-	landcover:Maize                       | 0.2326, // TRV: 1130 Maize
-	landcover:RiceField                   | 0.2485, // TRV: 1140 Rice
-	landcover:DryPulse                    | 0.2457, // TRV: 1220 Dry Pulses
-	landcover:Potato                      | 0.2398, // TRV: 1310 Potatoes
-	landcover:Beet                        | 0.2491, // TRV: 1320 Sugar Beet
-	landcover:Sunflower                   | 0.2296, // TRV: 1410 Sunflower
-	landcover:Soybean                     | 0.2281, // TRV: 1420 Soybeans
-	landcover:Rapeseed                    | 0.2324, // TRV: 1430 Rapeseed
-	landcover:Cotton                      | 0.2498, // TRV: 1440 Flax+Cotton+Hemp
-	
-	// More general crop concepts
-	landcover:Cereals                     | 0.2318, // TRV: 1120 Barley+OtherCereals
-	landcover:Vegetable                   | 0.2438, // TRV: 1210 Fresh vegetables
-	
-	landcover:Grassland                   | 0.1961, // TRV: 1500 Grassland mowed
-	landcover:Pastureland                 | 0.0862, // TRV: 3100 Pastures
-	
-	// Permanent crops: TRV class 2100 is aggregated
-	landcover:Vineyard                    | 0.2088, // TRV: 2100 Grapes+Fruits+Olives+Nuts
-	landcover:FruitBerryPlantation        | 0.2088, // TRV: 2100 Grapes+Fruits+Olives+Nuts
-	landcover:OliveGrove                  | 0.2088, // TRV: 2100 Grapes+Fruits+Olives+Nuts
-	landcover:NutOrchard                  | 0.2088, // TRV: 2100 Grapes+Fruits+Olives+Nuts
-	landcover:PermanentCropland           | 0.2088, // TRV: 2100 Grapes+Fruits+Olives+Nuts
-	
-	// General arable concept kept after all specific agricultural classes
-	landcover:ArableLand                  | 0.2104, // TRV: 1600 Other arable land
-	
-	landcover:Wetland                     | 0.1939, // TRV: 6101 Permanent wet + 6102 Temporary wet; simple mean
-	landcover:BareRock                    | 0.0990  // TRV: 6201 Bare rock/soil
-}};
-
-
-// -----------------------------------------------------------------------------
-// COUNTERFACTUAL C-FACTOR WITHOUT VEGETATION
-// Not derived from JRC: C = 1 for vegetated classes.
-// Already non-vegetated/excluded classes retain their actual C.
-// -----------------------------------------------------------------------------
-
-define C_FACTOR_TABLE_UNVEGETATED_TRV as {{
-	
-	    land_cover_type                  | c_factor
-	------------------------------------------------
-	
-	landcover:ConiferousForest            | 1,      // TRV: 211 + 212 + 213
-	landcover:BroadleafForest             | 1,      // TRV: 221 + 222 + 223
-	
-	landcover:MineralExtraction           | 0.1666, // TRV: 300; already non-vegetated/disturbed
-	landcover:Urban                       | 0,      // TRV: 401; no vegetation service
-	landcover:UrbanPark                   | 1,      // TRV: 403; vegetation removed
-	landcover:WaterBody                   | 0,      // TRV: 500; excluded
-	
-	landcover:Wheat                       | 1,      // TRV: 1110
-	landcover:Maize                       | 1,      // TRV: 1130
-	landcover:RiceField                   | 1,      // TRV: 1140
-	landcover:DryPulse                    | 1,      // TRV: 1220
-	landcover:Potato                      | 1,      // TRV: 1310
-	landcover:Beet                        | 1,      // TRV: 1320
-	landcover:Sunflower                   | 1,      // TRV: 1410
-	landcover:Soybean                     | 1,      // TRV: 1420
-	landcover:Rapeseed                    | 1,      // TRV: 1430
-	landcover:Cotton                      | 1,      // TRV: 1440
-	
-	landcover:Cereals                     | 1,      // TRV: 1120
-	landcover:Vegetable                   | 1,      // TRV: 1210
-	
-	landcover:Grassland                   | 1,      // TRV: 1500
-	landcover:Pastureland                 | 1,      // TRV: 3100
-	
-	landcover:Vineyard                    | 1,      // TRV: 2100
-	landcover:FruitBerryPlantation        | 1,      // TRV: 2100
-	landcover:OliveGrove                  | 1,      // TRV: 2100
-	landcover:NutOrchard                  | 1,      // TRV: 2100
-	landcover:PermanentCropland           | 1,      // TRV: 2100
-	
-	landcover:ArableLand                  | 1,      // TRV: 1600
-	
-	landcover:Wetland                     | 1,      // TRV: 6101 + 6102; vegetation removed
-	landcover:BareRock                    | 0.0990  // TRV: 6201; already non-vegetated
-}};
-
-
-// -----------------------------------------------------------------------------
-// P-FACTOR
-// Values from the JRC-based 2018 biophysical table.
-// -----------------------------------------------------------------------------
-
-define P_FACTOR_TABLE_TRV as {{
-	
-	    land_cover_type                  | p_factor
-	------------------------------------------------
-	
-	landcover:ConiferousForest            | 0.9965, // TRV: 211 + 212 + 213; simple mean
-	landcover:BroadleafForest             | 0.9846, // TRV: 221 + 222 + 223; simple mean
-	
-	landcover:MineralExtraction           | 0.9641, // TRV: 300
-	landcover:Urban                       | 1.0000, // TRV: 401
-	landcover:UrbanPark                   | 0.9571, // TRV: 403
-	landcover:WaterBody                   | 1.0000, // TRV: 500
-	
-	// Specific annual crops
-	landcover:Wheat                       | 0.9551, // TRV: 1110
-	landcover:Maize                       | 0.9267, // TRV: 1130
-	landcover:RiceField                   | 0.9714, // TRV: 1140
-	landcover:DryPulse                    | 0.9708, // TRV: 1220
-	landcover:Potato                      | 0.9550, // TRV: 1310
-	landcover:Beet                        | 0.9517, // TRV: 1320
-	landcover:Sunflower                   | 0.9042, // TRV: 1410
-	landcover:Soybean                     | 0.9141, // TRV: 1420
-	landcover:Rapeseed                    | 0.9332, // TRV: 1430
-	landcover:Cotton                      | 0.9590, // TRV: 1440
-	
-	// More general crop concepts
-	landcover:Cereals                     | 0.9382, // TRV: 1120
-	landcover:Vegetable                   | 0.9605, // TRV: 1210
-	
-	landcover:Grassland                   | 0.9509, // TRV: 1500
-	landcover:Pastureland                 | 0.9928, // TRV: 3100
-	
-	// Permanent crops: TRV class 2100 is aggregated
-	landcover:Vineyard                    | 0.9522, // TRV: 2100
-	landcover:FruitBerryPlantation        | 0.9522, // TRV: 2100
-	landcover:OliveGrove                  | 0.9522, // TRV: 2100
-	landcover:NutOrchard                  | 0.9522, // TRV: 2100
-	landcover:PermanentCropland           | 0.9522, // TRV: 2100
-	
-	// General arable concept kept after all specific agricultural classes
-	landcover:ArableLand                  | 0.9527, // TRV: 1600
-	
-	landcover:Wetland                     | 0.9550, // TRV: 6101 + 6102; simple mean
-	landcover:BareRock                    | 0.9959  // TRV: 6201
-}};
-
 //For soil erodibility, instead of computing it using the general formula of the global model using sand, silt, clay and soil organic matter
 //we directly annotate and use a JRC European soil erodibility layer
 model 'local:rain80818:im.aries.pyrenees:aries_nbsoil_data.eu28_esdac_soil_erodibility_kfactor_500m_epsg3035_2014'
 	as soil:SoilErodibility named k_factor;
  
-//At the same time, the JRC European layer for erosivity can be used (CONTROLLARE AL POSTO DI COSA INSERIRLO..FORSE AL POSTO DI NULLA, PUOI LASCIARLO COSì)
+//At the same time, the JRC European layer for erosivity can be used
 model 'local:justus.muhando:im.aries.pyrenees:aries_pyrenees_data.eu_r_factor_epsg3035_500m_2010'
 	as soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h) named r_factor;
 

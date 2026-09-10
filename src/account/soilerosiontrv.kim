@@ -8,9 +8,6 @@ private namespace account.soilerosiontrv
 // Specific concepts are listed before more general parent concepts.
 // -----------------------------------------------------------------------------
 
-//TODO:move tables in dedicated namespace and call them from there
-//TODO:Integrate the watershed boundary if we end up using USPED methodology
-
 //For soil erodibility, instead of computing it using the general formula of the global model using sand, silt, clay and soil organic matter
 //we directly annotate and use a JRC European soil erodibility layer
 model 'local:rain80818:im.aries.pyrenees:aries_nbsoil_data.eu28_esdac_soil_erodibility_kfactor_500m_epsg3035_2014'

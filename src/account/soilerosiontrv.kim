@@ -7,6 +7,10 @@ private namespace account.soilerosiontrv;
 // Specific concepts are listed before more general parent concepts.
 // -----------------------------------------------------------------------------
 
+
+//TODO:Integrate the watershed boundary if we end up using USPED methodology
+
+
 define C_FACTOR_TABLE_TRV as {{
 	
 	    land_cover_type                  | c_factor
@@ -223,15 +227,18 @@ model soil:SlopeSteepnessAndLength named ls_factor_trv
  
 model soil:CoverManagement
     observing landcover:LandCoverType named lct
-    lookup (lct) into C_FACTOR_TABLE_TRV;
+    lookup (lct) into C_FACTOR_TABLE_TRV
+    over space (urn = 'local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 
 model soil:CoverManagement caused by ecology:Vegetation
     observing landcover:LandCoverType named lct
-    lookup (lct) into C_FACTOR_TABLE_UNVEGETATED_TRV;
+    lookup (lct) into C_FACTOR_TABLE_UNVEGETATED_TRV
+    over space (urn = 'local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
     
 model soil:SupportPractice
     observing landcover:LandCoverType named lct
-    lookup (lct) into P_FACTOR_TABLE_TRV;
+    lookup (lct) into P_FACTOR_TABLE_TRV
+    over space (urn = 'local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 
 @intensive(space)
 model im:Potential (im:Removed soil:Soil im:Mass) in t/ha named soil_erosion_trv
@@ -241,7 +248,8 @@ model im:Potential (im:Removed soil:Soil im:Mass) in t/ha named soil_erosion_trv
 		soil:SlopeSteepnessAndLength 				   named ls_factor,
 		soil:CoverManagement 						   named c_factor,
 		soil:SupportPractice 						   named p_factor
-	set to [(r_factor * k_factor * ls_factor * c_factor * p_factor)];
+	set to [(r_factor * k_factor * ls_factor * c_factor * p_factor)]
+	over space (urn = 'local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 
 
 //In the retention formula below (RUSLV), the p_factor is missing; WHY? LOGIC TO BE ASKED
@@ -256,9 +264,10 @@ model im:Retained soil:Soil im:Mass caused by ecology:Vegetation in t/ha named s
 		soil:SupportPractice 						      named p_factor
 	set to [
 		def rusle = (r_factor * k_factor * ls_factor * c_factor * p_factor)
-		def ruslv = (r_factor * k_factor * ls_factor * c_factor_unvegetated) 
+		def ruslv = (r_factor * k_factor * ls_factor * c_factor_unvegetated * p_factor) 
 		def delta = ruslv - rusle
 		return ((delta < 0) ? 0 : delta)
-	];
+	]
+	over space (urn = 'local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 	
 

@@ -1,0 +1,576 @@
+private namespace natcaptriveneto.account.soilerosion.usped
+	using nca.ecology,
+		  nca.ecoregion,
+		  (flow_directions_d8) from components.geoprocessing.morphometry;
+
+define USPED_C_FACTOR_TABLE as {{
+	
+	    land_cover_type								|	vegetation_type			|	crop_type			|	c_factor
+	--------------------------------------------------------------------------------------------------------------
+	landcover:LowDensityUrban						|	#						|	#					|	0		,
+    landcover:Urban									|	#						|	#					|	0		,
+    landcover:IndustrialUnit						|	#						|	#					|	0		,
+    landcover:CommercialUnit						|	#						|	#					|	0		, 
+    landcover:RoadNetwork							|	#						|	#					|	0		,
+    landcover:HydraulicWorksite						|	#						|	#					|	0		,
+    landcover:Landfill								|	#						|	#					|	0		,    
+    hydrology:Sewage								|	#						|	#					|	0		,
+    landcover:Construction							|	#						|	#					|	0		,
+    landcover:MineDumpConstruction					|	#						|	#					|	0		, 
+    landcover:CemeteryPark							|	#						|	#					|	0		,
+    landcover:BotanicalGarden						|	#						|	#					|	0.04	,
+    landcover:UrbanPark								|	GBIF.SPECIES:3152861	|	#					|	0.03	,
+    landcover:UrbanPark								|	#						|	#					|	0		,    
+    landcover:GreenUrbanArea						|	#						|	#					|	0		,
+    landcover:CulturalArea							|	#						|	#					|	0		,
+    landcover:SportFacility							|	#						|	#					|	0		,    
+    landcover:RecreationalFacility					|	#						|	#					|	0		,
+    
+    landcover:DeciduousBroadleafForest				|	#						|	#					|	0.03	, 
+    landcover:ConiferousForest						|	#						|	#					|	0.03	,    
+    landcover:Forest								|	GBIF.GENUS:2186576		|	#					|	0.1		,
+	landcover:Forest								|	GBIF.GENUS:2879175		|	#					|	0.15	,
+	landcover:Forest								|	GBIF.GENUS:3170822		|	#					|	0.4		,
+	landcover:Forest								|	#						|	#					|	0.03	,
+    
+    ecology:ShrubVegetation landcover:Grassland		|	#						|	#					|	0.08	,
+    landcover:Fern									|	#						|	#					|	0.04	,
+    landcover:Grassland								|	#						|	#					|	0.08	,
+    ecology:WoodyVegetation landcover:Shrubland		|	#						|	#					|	0.04	,
+    es.nca:Mediterranean landcover:Shrubland		|	#						|	#					|	0.2		,    
+    landcover:Shrubland								|	#						|	#					|	0.08	,
+    landcover:TransitionalWoodlandScrub				|	#						|	#					|	0.4		,
+    landcover:ScrubHerbaceousVegetation				|	GBIF.GENUS:2684359		|	#					|	0.2		,
+    landcover:ScrubHerbaceousVegetation				|	in (GBIF.SPECIES:7902408, GBIF.GENUS:3013395)	|	#						|	0.03	,
+    landcover:ScrubHerbaceousVegetation				|	GBIF.SPECIES:8016180	|	#					|	0.02	,
+    landcover:ScrubHerbaceousVegetation				|	GBIF.SPECIES:5354656	|	#					|	0.15	,
+    landcover:ScrubHerbaceousVegetation				|	#						|	#					|	0.08	,
+    
+    landcover:ConiferPlantation						|	#						|	#					|	0.03	,
+    
+    landcover:Vineyard								|	#						|	#					|	0.54	,
+    landcover:PastureWithTree						|	#						|	#					|	0.04	,
+    nca.ecoregion:HighMonte landcover:Pastureland	|	#						|	#					|	0.2		,
+    landcover:Pastureland							|	#						|	#					|	0.2		,
+    
+    landcover:ArableLand							|	#						|	#					|	0.38	,                
+    landcover:AgriculturalVegetation				|	#						|	in (agriculture:Avocado, agriculture:Kiwifruit)	|	0.2		,
+    landcover:AgriculturalVegetation				|	#						|	in (agriculture:Chestnut, agriculture:Cherry)	|	0.03	,
+    landcover:AgriculturalVegetation				|	#						|	agriculture:Pistachio							|	0.54	,
+    landcover:AgriculturalVegetation				|	#						|	agriculture:Meadow								|	0.25	,
+    landcover:AgriculturalVegetation				|	#						|	agriculture:Blackberry							|	0.04	,
+    landcover:AgriculturalVegetation				|	#						|	#												|	0.4		,    
+  
+    landcover:RockyOutcrop							|	#						|	#					|	0		,
+    landcover:SparseVegetation						|	#						|	#					|	1		,
+    landcover:BareArea								|	#						|	#					|	1		,
+    
+    landcover:Watercourse							|	#						|	#					|	0		,
+    landcover:Lake									|	#						|	#					|	0		,
+    landcover:Canal									|	#						|	#					|	0		,
+    landcover:Reservoir								|	#						|	#					|	0		,
+    landcover:ContinentalAquaculturePond			|	#						|	#					|	0		,
+    landcover:ArtificialWaterBody					|	#						|	#					|	0		,
+        
+    landcover:InlandWetland							|	#						|	#					|	0.08	    
+}};
+
+define USPED_P_FACTOR_TABLE as {{
+	
+	       land_cover_type							|	p_factor
+	--------------------------------------------------------------
+    hydrology:Sewage								|	1	,
+    landcover:ArtificialSurface						|	1	,
+    landcover:Forest								|	1	,    
+    ecology:ShrubVegetation landcover:Grassland		|	1	,
+    ecology:WoodyVegetation landcover:Shrubland		|	1	,
+    es.nca:Mediterranean landcover:Shrubland		|	1	,
+    landcover:ScrubHerbaceousVegetation				|	1	,    
+    nca.ecoregion:HighMonte landcover:Pastureland	|	1	,
+    landcover:Pastureland							|	1	,
+    landcover:ArableLand							|	0.5	,
+	landcover:AgriculturalVegetation				|	0.8	,
+	landcover:SeminaturalOpenSpace					|	1	,
+	landcover:WaterBody								|	1	,
+	landcover:Wetland								|	1
+}};
+
+model local:justus.muhando:im.aries.pyrenees:aries_pyrenees_data.eu_r_factor_epsg3035_500m_2010
+	as soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h) named r_factor;
+	
+model local:rain80818:im.aries.pyrenees:aries_nbsoil_data.eu28_esdac_soil_erodibility_kfactor_500m_epsg3035_2014
+	as soil:SoilErodibility named k_factor;
+	
+model soil:CoverManagement named c_factor
+	observing
+		landcover:LandCoverType named landcover,
+		ecology:Vegetation landcover:LandCoverType named vegetation_type,
+		type of agriculture:Crop named crop_type
+	lookup (landcover, vegetation_type, crop_type, ?) into USPED_C_FACTOR_TABLE;
+	
+model soil:SupportPractice named p_factor
+    observing 
+    	landcover:LandCoverType named landcover
+    lookup (landcover, ?) into USPED_P_FACTOR_TABLE;
+    
+/*
+ * # LS factor: A^m * (sinb)^n
+ */
+define WEIGHT_C_FACTOR_TABLE as {{
+	
+	    landcover                             		| cw_factor
+	-----------------------------------------------------------	
+	hydrology:Sewage								|	1	,
+    landcover:ArtificialSurface						|	1	,
+    landcover:Forest								|	0.5	,    
+    ecology:ShrubVegetation landcover:Grassland		|	0.7	,
+    ecology:WoodyVegetation landcover:Shrubland		|	0.7	,
+    es.nca:Mediterranean landcover:Shrubland		|	0.7	,
+    landcover:ScrubHerbaceousVegetation				|	0.7	,    
+    nca.ecoregion:HighMonte landcover:Pastureland	|	0.7	,
+    landcover:Pastureland							|	0.7	,
+    landcover:ArableLand							|	0.7	,
+	landcover:AgriculturalVegetation				|	0.7	,
+	landcover:SeminaturalOpenSpace					|	1	,
+	landcover:WaterBody								|	1	,
+	landcover:Wetland								|	0.9
+}};
+
+model im:Reference soil:CoverManagement named c_factor_weight
+	observing
+		landcover:LandCoverType named landcover
+	lookup (landcover, ?) into WEIGHT_C_FACTOR_TABLE;
+
+number weighted_contribution
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		im:Reference soil:CoverManagement named c_factor_weight 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = cell.c_factor_weight
+				
+				if (! ret) {
+					ret = 0
+				}
+				else {
+					if (cell.upstream) {
+					def sum_upcell = 0
+						for (upcell in cell.upstream) {
+							sum_upcell += upcell.self                                           
+						}
+					ret += sum_upcell
+				   }
+				}			
+				return ret			
+			])
+		;
+
+model hydrology:ContributingArea of hydrology:Watershed in m^2 named contributingarea
+	observing
+		weighted_contribution
+	set to [weighted_contribution * space.width * space.height];
+	
+model soil:SlopeSteepnessAndLength named ls_factor
+	observing
+		hydrology:ContributingArea of hydrology:Watershed in m^2 named contributingarea, 
+		geography:Slope in degree_angle named slope
+	set to [
+		def sloperadians = slope * Math.PI / 180
+		def ex = Math.sin(sloperadians)
+		def m = 1
+		def n = 1
+		def ca = Math.pow(contributingarea/space.width, m)
+		def pex = Math.pow(ex, n)
+		def ls = ca * pex
+		return ls
+	];	
+
+* ----------------------------------------------------------------------------------------------------------------------------------
+ * # USPED sediment transport capacity.
+ */
+@intensive(space)
+@extensive(time)   
+model im:Potential (im:Changed soil:Soil im:Capacity) named sedflow 
+	observing
+		soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h) named r_factor,
+		soil:SoilErodibility named k_factor,				    
+		soil:CoverManagement named c_factor,
+		soil:SupportPractice named p_factor,
+		soil:SlopeSteepnessAndLength named ls_factor
+	set to [
+		def ret = r_factor * k_factor * c_factor * p_factor * ls_factor
+		return ret
+	];
+	
+/* ----------------------------------------------------------------------------------------------------------------------------------
+ * # Divergence (erosion_deposition) calculation. (Deposition: if divergence is positive. Erosion: if divergence is negative.)
+ */		
+number sedflow_x
+	observing
+		geography:Aspect in degree_angle named aspect,
+		im:Potential (im:Changed soil:Soil im:Capacity) named sedflow
+	set to [sedflow * Math.cos((- aspect + 450) * Math.PI / 180)];
+
+number sedflow_y
+	observing
+		geography:Aspect in degree_angle named aspect,
+		im:Potential (im:Changed soil:Soil im:Capacity) named sedflow
+	set to [sedflow * Math.sin((- aspect + 450) * Math.PI / 180)];
+
+number sedflow_x_slope
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_x 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def rise_run = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_x + 2 * cell.e.sedflow_x + cell.se.sedflow_x) - (cell.nw.sedflow_x + 2 * cell.w.sedflow_x + cell.sw.sedflow_x)) / (8 * space.height) 
+					dz_dy = ((cell.sw.sedflow_x + 2 * cell.s.sedflow_x + cell.se.sedflow_x) - (cell.nw.sedflow_x + 2 * cell.n.sedflow_x + cell.ne.sedflow_x)) / (8 * space.width)
+					rise_run = Math.sqrt(Math.pow(dz_dx,2) + Math.pow(dz_dy,2))
+					ret = Math.atan(rise_run) * 180 / Math.PI
+				}							
+				return ret			
+			]);
+			
+number sedflow_x_aspect
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_x 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def aspect_rad = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_x + 2 * cell.e.sedflow_x + cell.se.sedflow_x) - (cell.nw.sedflow_x + 2 * cell.w.sedflow_x + cell.sw.sedflow_x)) / 8 
+					dz_dy = ((cell.sw.sedflow_x + 2 * cell.s.sedflow_x + cell.se.sedflow_x) - (cell.nw.sedflow_x + 2 * cell.n.sedflow_x + cell.ne.sedflow_x)) / 8
+					aspect_rad = Math.atan2(dz_dy, -dz_dx)
+					ret = aspect_rad * 180 / Math.PI
+				}							
+				return ret			
+			]);
+			
+number sedflow_y_slope
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_y 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def rise_run = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_y + 2 * cell.e.sedflow_y + cell.se.sedflow_y) - (cell.nw.sedflow_y + 2 * cell.w.sedflow_y + cell.sw.sedflow_y)) / (8 * space.height) 
+					dz_dy = ((cell.sw.sedflow_y + 2 * cell.s.sedflow_y + cell.se.sedflow_y) - (cell.nw.sedflow_y + 2 * cell.n.sedflow_y + cell.ne.sedflow_y)) / (8 * space.width)
+					rise_run = Math.sqrt(Math.pow(dz_dx,2) + Math.pow(dz_dy,2))
+					ret = Math.atan(rise_run) * 180 / Math.PI
+				}							
+				return ret			
+			]);
+			
+number sedflow_y_aspect
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_y 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def aspect_rad = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_y + 2 * cell.e.sedflow_y + cell.se.sedflow_y) - (cell.nw.sedflow_y + 2 * cell.w.sedflow_y + cell.sw.sedflow_y)) / 8 
+					dz_dy = ((cell.sw.sedflow_y + 2 * cell.s.sedflow_y + cell.se.sedflow_y) - (cell.nw.sedflow_y + 2 * cell.n.sedflow_y + cell.ne.sedflow_y)) / 8
+					aspect_rad = Math.atan2(dz_dy, -dz_dx)
+					ret = aspect_rad * 180 / Math.PI
+				}							
+				return ret			
+			]);
+		
+@intensive(space)
+@extensive (time)
+model im:Potential (im:Changed soil:Soil im:Mass) in t/ha named erosion_deposition
+	observing
+		sedflow_x_aspect,
+		sedflow_x_slope,
+		sedflow_y_aspect,
+		sedflow_y_slope		
+	set to [		
+		def sedflow_dx = Math.cos((- sedflow_x_aspect + 450) * Math.PI / 180) * Math.tan(sedflow_x_slope * Math.PI / 180)
+		def sedflow_dy = Math.sin((- sedflow_y_aspect + 450) * Math.PI / 180) * Math.tan(sedflow_y_slope * Math.PI / 180)
+		def ret = sedflow_dx + sedflow_dy
+		return ret
+	];
+	// Reference: https://ncsu-geoforall-lab.github.io/erosion-modeling-tutorial/arcgis.html
+	
+/*
+ * # Deposition: if divergence is positive. 
+ * # Erosion: if divergence is negative.
+ */
+@colormap(values = {
+	    im:ExtremelyHigh:   (255 0 0),
+	    im:High:        	(255 113 17),
+	  	im:Moderate:        (255 128 0),
+	  	im:Low:  			(255 255 0),
+	    im:None:        	(128 255 0)
+})	
+model level of im:Potential (im:Changed soil:Soil im:Mass) caused by earth:Erosion
+	observing
+		@intensive(space) im:Potential (im:Changed soil:Soil im:Mass) in t/ha named erosion_deposition
+		lookup (?, erosion_deposition) into
+		     erosion_level	|	erosion_deposition
+	  ---------------------------------------------    
+	  im:ExtremelyHigh		|		 < -50	,
+	  im:High				|	-50 to -5	,   
+	  im:Moderate			|	 -5 to -1	,   
+	  im:Low				|	 -1 to -0.1	,      
+	  im:None				|  -0.1 to 0.1	;
+	 
+@colormap(values = {
+	    im:None:        	(128 255 0),
+	  	im:Low:   			(0 153 0),
+	  	im:Moderate:        (19 95 0),
+	  	im:High:	  	    (0 128 255),
+	  	im:ExtremelyHigh:   (0 0 153)
+})	
+model level of im:Potential (im:Changed soil:Soil im:Mass) caused by physical:Deposition
+	observing
+		@intensive(space) im:Potential (im:Changed soil:Soil im:Mass) in t/ha named erosion_deposition
+		lookup (?, erosion_deposition) into
+		   deposition_level	|	erosion_deposition
+	  ---------------------------------------------          
+	  im:None				|  -0.1 to 0.1	,   
+	  im:Low				|	0.1 to 1	,
+	  im:Moderate			|	  1 to 5	,
+	  im:High				|	  5 to 50	,   
+	  im:ExtremelyHigh		|		 > 50	;	  
+
+
+/* ----------------------------------------------------------------------------------------------------------------------------------
+ * # USPED sediment transport capacity.
+ */
+define USPED_C_FACTOR_TABLE_UNVEGETATED as {{
+	
+	    land_cover_type								|	vegetation_type			|	crop_type			|	c_factor
+	------------------------------------------------------------------------------------------------------------------
+	landcover:LowDensityUrban						|	#						|	#					|	0		,
+    landcover:Urban									|	#						|	#					|	0		,
+    landcover:IndustrialUnit						|	#						|	#					|	0		,
+    landcover:CommercialUnit						|	#						|	#					|	0		, 
+    landcover:RoadNetwork							|	#						|	#					|	0		,
+    landcover:HydraulicWorksite						|	#						|	#					|	0		,
+    landcover:Landfill								|	#						|	#					|	0		,    
+    hydrology:Sewage								|	#						|	#					|	0		,
+    landcover:Construction							|	#						|	#					|	0		,
+    landcover:MineDumpConstruction					|	#						|	#					|	0		, 
+    landcover:CemeteryPark							|	#						|	#					|	0		,
+    landcover:BotanicalGarden						|	#						|	#					|	1		,
+    landcover:UrbanPark								|	#						|	#					|	1		,    
+    landcover:GreenUrbanArea						|	#						|	#					|	0		,
+    landcover:CulturalArea							|	#						|	#					|	0		,
+    landcover:SportFacility							|	#						|	#					|	0		,    
+    landcover:RecreationalFacility					|	#						|	#					|	0		,
+    
+    landcover:DeciduousBroadleafForest				|	#						|	#					|	1		, 
+    landcover:ConiferousForest						|	#						|	#					|	1		,    
+	landcover:Forest								|	#						|	#					|	1		,
+    
+    ecology:ShrubVegetation landcover:Grassland		|	#						|	#					|	1		,
+    landcover:Fern									|	#						|	#					|	1		,
+    landcover:Grassland								|	#						|	#					|	1		,
+    ecology:WoodyVegetation landcover:Shrubland		|	#						|	#					|	1		,
+    es.nca:Mediterranean landcover:Shrubland		|	#						|	#					|	1		,    
+    landcover:Shrubland								|	#						|	#					|	1		,
+    landcover:TransitionalWoodlandScrub				|	#						|	#					|	1		,
+    landcover:ScrubHerbaceousVegetation				|	#						|	#					|	1		,
+    
+    landcover:ConiferPlantation						|	#						|	#					|	1		,
+    
+    landcover:Vineyard								|	#						|	#					|	1		,
+    landcover:PastureWithTree						|	#						|	#					|	1		,
+    nca.ecoregion:HighMonte landcover:Pastureland	|	#						|	#					|	1		,
+    landcover:Pastureland							|	#						|	#					|	1		,
+    
+    landcover:ArableLand							|	#						|	#					|	1		,                
+    landcover:AgriculturalVegetation				|	#						|	#					|	1		,    
+  
+    landcover:RockyOutcrop							|	#						|	#					|	0		,
+    landcover:SparseVegetation						|	#						|	#					|	1		,
+    landcover:BareArea								|	#						|	#					|	1		,
+    
+    landcover:Watercourse							|	#						|	#					|	0		,
+    landcover:Lake									|	#						|	#					|	0		,
+    landcover:Canal									|	#						|	#					|	0		,
+    landcover:Reservoir								|	#						|	#					|	0		,
+    landcover:ContinentalAquaculturePond			|	#						|	#					|	0		,
+    landcover:ArtificialWaterBody					|	#						|	#					|	0		,
+        
+    landcover:InlandWetland							|	#						|	#					|	1	    
+}};
+
+model soil:CoverManagement caused by ecology:Vegetation named c_factor_unvegetated
+    observing
+    	landcover:LandCoverType named landcover
+	lookup (landcover, *, *, ?) into USPED_C_FACTOR_TABLE_UNVEGETATED;	
+	
+@intensive(space)
+@extensive(time)   
+model im:Potential (im:Changed soil:Soil im:Capacity) caused by ecology:Vegetation named sedflow_unvegetated 
+	observing
+		soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h) named r_factor,
+		soil:SoilErodibility named k_factor,				    
+		soil:CoverManagement caused by ecology:Vegetation named c_factor_unvegetated,
+		soil:SupportPractice named p_factor,
+		soil:SlopeSteepnessAndLength named ls_factor
+	set to [
+		def ret = r_factor * k_factor * c_factor_unvegetated * p_factor * ls_factor
+		return ret
+	];
+	
+/* ----------------------------------------------------------------------------------------------------------------------------------
+ * # Divergence of un-vegetated scenario (erosion_deposition) calculation. (Deposition: if divergence is positive. Erosion: if divergence is negative.)
+ */		
+number sedflow_x_unvegetated
+	observing
+		geography:Aspect in degree_angle named aspect,
+		im:Potential (im:Changed soil:Soil im:Capacity) caused by ecology:Vegetation named sedflow_unvegetated
+	set to [sedflow_unvegetated * Math.cos((- aspect + 450) * Math.PI / 180)];
+
+number sedflow_y_unvegetated
+	observing
+		geography:Aspect in degree_angle named aspect,
+		im:Potential (im:Changed soil:Soil im:Capacity) caused by ecology:Vegetation named sedflow_unvegetated
+	set to [sedflow_unvegetated * Math.sin((- aspect + 450) * Math.PI / 180)];
+
+number sedflow_x_slope_unvegetated
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_x_unvegetated 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def rise_run = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_x_unvegetated + 2 * cell.e.sedflow_x_unvegetated + cell.se.sedflow_x_unvegetated) - (cell.nw.sedflow_x_unvegetated + 2 * cell.w.sedflow_x_unvegetated + cell.sw.sedflow_x_unvegetated)) / (8 * space.height) 
+					dz_dy = ((cell.sw.sedflow_x_unvegetated + 2 * cell.s.sedflow_x_unvegetated + cell.se.sedflow_x_unvegetated) - (cell.nw.sedflow_x_unvegetated + 2 * cell.n.sedflow_x_unvegetated + cell.ne.sedflow_x_unvegetated)) / (8 * space.width)
+					rise_run = Math.sqrt(Math.pow(dz_dx,2) + Math.pow(dz_dy,2))
+					ret = Math.atan(rise_run) * 180 / Math.PI
+				}							
+				return ret			
+			]);
+			
+number sedflow_x_aspect_unvegetated
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_x_unvegetated 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def aspect_rad = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_x_unvegetated + 2 * cell.e.sedflow_x_unvegetated + cell.se.sedflow_x_unvegetated) - (cell.nw.sedflow_x_unvegetated + 2 * cell.w.sedflow_x_unvegetated + cell.sw.sedflow_x_unvegetated)) / 8 
+					dz_dy = ((cell.sw.sedflow_x_unvegetated + 2 * cell.s.sedflow_x_unvegetated + cell.se.sedflow_x_unvegetated) - (cell.nw.sedflow_x_unvegetated + 2 * cell.n.sedflow_x_unvegetated + cell.ne.sedflow_x_unvegetated)) / 8
+					aspect_rad = Math.atan2(dz_dy, -dz_dx)
+					ret = aspect_rad * 180 / Math.PI
+				}							
+				return ret			
+			]);
+			
+number sedflow_y_slope_unvegetated
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_y_unvegetated 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def rise_run = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_y_unvegetated + 2 * cell.e.sedflow_y_unvegetated + cell.se.sedflow_y_unvegetated) - (cell.nw.sedflow_y_unvegetated + 2 * cell.w.sedflow_y_unvegetated + cell.sw.sedflow_y_unvegetated)) / (8 * space.height) 
+					dz_dy = ((cell.sw.sedflow_y_unvegetated + 2 * cell.s.sedflow_y_unvegetated + cell.se.sedflow_y_unvegetated) - (cell.nw.sedflow_y_unvegetated + 2 * cell.n.sedflow_y_unvegetated + cell.ne.sedflow_y_unvegetated)) / (8 * space.width)
+					rise_run = Math.sqrt(Math.pow(dz_dx,2) + Math.pow(dz_dy,2))
+					ret = Math.atan(rise_run) * 180 / Math.PI
+				}							
+				return ret			
+			]);
+			
+number sedflow_y_aspect_unvegetated
+	observing
+		hydrology:StreamOutlet,
+		flow_directions_d8,
+		sedflow_y_unvegetated 
+		using im.hydrology.accumulateflow( 
+			evaluate = 
+			[			         
+				def ret = 0
+				def dz_dx = 0
+				def dz_dy = 0
+				def aspect_rad = 0				
+				if (cell.neighborhood) {
+					dz_dx = ((cell.ne.sedflow_y_unvegetated + 2 * cell.e.sedflow_y_unvegetated + cell.se.sedflow_y_unvegetated) - (cell.nw.sedflow_y_unvegetated + 2 * cell.w.sedflow_y_unvegetated + cell.sw.sedflow_y_unvegetated)) / 8 
+					dz_dy = ((cell.sw.sedflow_y_unvegetated + 2 * cell.s.sedflow_y_unvegetated + cell.se.sedflow_y_unvegetated) - (cell.nw.sedflow_y_unvegetated + 2 * cell.n.sedflow_y_unvegetated + cell.ne.sedflow_y_unvegetated)) / 8
+					aspect_rad = Math.atan2(dz_dy, -dz_dx)
+					ret = aspect_rad * 180 / Math.PI
+				}							
+				return ret			
+			]);
+		
+@intensive(space)
+@extensive (time)
+model im:Potential (im:Changed soil:Soil im:Mass) caused by ecology:Vegetation in t/ha named erosion_deposition_unvegetated
+	observing
+		sedflow_x_aspect_unvegetated,
+		sedflow_x_slope_unvegetated,
+		sedflow_y_aspect_unvegetated,
+		sedflow_y_slope_unvegetated		
+	set to [		
+		def sedflow_dx = Math.cos((- sedflow_x_aspect_unvegetated + 450) * Math.PI / 180) * Math.tan(sedflow_x_slope_unvegetated * Math.PI / 180)
+		def sedflow_dy = Math.sin((- sedflow_y_aspect_unvegetated + 450) * Math.PI / 180) * Math.tan(sedflow_y_slope_unvegetated * Math.PI / 180)
+		def ret = sedflow_dx + sedflow_dy
+		return ret
+	];	
+
+@colormap(values = {
+	    im:ExtremelyHigh:   (255 0 0),
+	    im:High:        	(255 113 17),
+	  	im:Moderate:        (255 128 0),
+	  	im:Low:  			(255 255 0),
+	    im:None:        	(128 255 0)
+})
+@intensive(space)
+@extensive(time)   
+model im:Retained soil:Soil im:Mass caused by ecology:Vegetation in t/ha named soil_retention 
+	observing
+		im:Potential (im:Changed soil:Soil im:Mass) in t/ha named erosion_deposition,
+		im:Potential (im:Changed soil:Soil im:Mass) caused by ecology:Vegetation in t/ha named erosion_deposition_unvegetated
+	set to [
+		def ret = erosion_deposition_unvegetated - erosion_deposition
+		return ((ret > 0) ? ret : 0)
+	]; 

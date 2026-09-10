@@ -7,7 +7,7 @@ private namespace account.soilerosiontrv;
 // Specific concepts are listed before more general parent concepts.
 // -----------------------------------------------------------------------------
 
-
+//TODO:move tables in dedicated namespace and call them from there
 //TODO:Integrate the watershed boundary if we end up using USPED methodology
 
 

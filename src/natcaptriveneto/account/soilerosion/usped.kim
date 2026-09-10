@@ -419,11 +419,12 @@ model im:Retained soil:Soil im:Mass caused by ecology:Vegetation in t/ha named s
 		im:Potential (im:Changed soil:Soil im:Mass) in t/ha named erosion_deposition,
 		im:Potential (im:Changed soil:Soil im:Mass) caused by ecology:Vegetation in t/ha named erosion_deposition_unvegetated
 	set to [
-		def ret = erosion_deposition - erosion_deposition_unvegetated
+		def ret = erosion_deposition - erosion_deposition_unvegetated 
 		return ((ret > 0) ? ret : 0)
 	]; 
 
-// TODO: verify soil_retention sign convention.
+// DONE: verify soil_retention sign convention.
 // With erosion < 0, the original Pyrenees subtraction may be reversed.
 // Expected formulation may be:
 // erosion_deposition - erosion_deposition_unvegetated.
+// We actually inverted the formula (it was OK for RUSLE but for USPED it should be inverted otherwise for soil retention everything is set to zero)

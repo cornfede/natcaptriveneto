@@ -1,145 +1,51 @@
 private namespace natcaptriveneto.account.soilerosion.usped
 	using nca.ecology,
 		  nca.ecoregion,
-		  (flow_directions_d8) from components.geoprocessing.morphometry;
+		  (flow_directions_d8) from components.geoprocessing.morphometry,
+		  (C_FACTOR_TABLE_TRV, C_FACTOR_TABLE_UNVEGETATED_TRV, P_FACTOR_TABLE_TRV, WEIGHT_C_FACTOR_TABLE_TRV) from natcaptriveneto.tables.soilerosion;
 
-define USPED_C_FACTOR_TABLE as {{
-	
-	    land_cover_type								|	vegetation_type			|	crop_type			|	c_factor
-	--------------------------------------------------------------------------------------------------------------
-	landcover:LowDensityUrban						|	#						|	#					|	0		,
-    landcover:Urban									|	#						|	#					|	0		,
-    landcover:IndustrialUnit						|	#						|	#					|	0		,
-    landcover:CommercialUnit						|	#						|	#					|	0		, 
-    landcover:RoadNetwork							|	#						|	#					|	0		,
-    landcover:HydraulicWorksite						|	#						|	#					|	0		,
-    landcover:Landfill								|	#						|	#					|	0		,    
-    hydrology:Sewage								|	#						|	#					|	0		,
-    landcover:Construction							|	#						|	#					|	0		,
-    landcover:MineDumpConstruction					|	#						|	#					|	0		, 
-    landcover:CemeteryPark							|	#						|	#					|	0		,
-    landcover:BotanicalGarden						|	#						|	#					|	0.04	,
-    landcover:UrbanPark								|	GBIF.SPECIES:3152861	|	#					|	0.03	,
-    landcover:UrbanPark								|	#						|	#					|	0		,    
-    landcover:GreenUrbanArea						|	#						|	#					|	0		,
-    landcover:CulturalArea							|	#						|	#					|	0		,
-    landcover:SportFacility							|	#						|	#					|	0		,    
-    landcover:RecreationalFacility					|	#						|	#					|	0		,
-    
-    landcover:DeciduousBroadleafForest				|	#						|	#					|	0.03	, 
-    landcover:ConiferousForest						|	#						|	#					|	0.03	,    
-    landcover:Forest								|	GBIF.GENUS:2186576		|	#					|	0.1		,
-	landcover:Forest								|	GBIF.GENUS:2879175		|	#					|	0.15	,
-	landcover:Forest								|	GBIF.GENUS:3170822		|	#					|	0.4		,
-	landcover:Forest								|	#						|	#					|	0.03	,
-    
-    ecology:ShrubVegetation landcover:Grassland		|	#						|	#					|	0.08	,
-    landcover:Fern									|	#						|	#					|	0.04	,
-    landcover:Grassland								|	#						|	#					|	0.08	,
-    ecology:WoodyVegetation landcover:Shrubland		|	#						|	#					|	0.04	,
-    es.nca:Mediterranean landcover:Shrubland		|	#						|	#					|	0.2		,    
-    landcover:Shrubland								|	#						|	#					|	0.08	,
-    landcover:TransitionalWoodlandScrub				|	#						|	#					|	0.4		,
-    landcover:ScrubHerbaceousVegetation				|	GBIF.GENUS:2684359		|	#					|	0.2		,
-    landcover:ScrubHerbaceousVegetation				|	in (GBIF.SPECIES:7902408, GBIF.GENUS:3013395)	|	#						|	0.03	,
-    landcover:ScrubHerbaceousVegetation				|	GBIF.SPECIES:8016180	|	#					|	0.02	,
-    landcover:ScrubHerbaceousVegetation				|	GBIF.SPECIES:5354656	|	#					|	0.15	,
-    landcover:ScrubHerbaceousVegetation				|	#						|	#					|	0.08	,
-    
-    landcover:ConiferPlantation						|	#						|	#					|	0.03	,
-    
-    landcover:Vineyard								|	#						|	#					|	0.54	,
-    landcover:PastureWithTree						|	#						|	#					|	0.04	,
-    nca.ecoregion:HighMonte landcover:Pastureland	|	#						|	#					|	0.2		,
-    landcover:Pastureland							|	#						|	#					|	0.2		,
-    
-    landcover:ArableLand							|	#						|	#					|	0.38	,                
-    landcover:AgriculturalVegetation				|	#						|	in (agriculture:Avocado, agriculture:Kiwifruit)	|	0.2		,
-    landcover:AgriculturalVegetation				|	#						|	in (agriculture:Chestnut, agriculture:Cherry)	|	0.03	,
-    landcover:AgriculturalVegetation				|	#						|	agriculture:Pistachio							|	0.54	,
-    landcover:AgriculturalVegetation				|	#						|	agriculture:Meadow								|	0.25	,
-    landcover:AgriculturalVegetation				|	#						|	agriculture:Blackberry							|	0.04	,
-    landcover:AgriculturalVegetation				|	#						|	#												|	0.4		,    
-  
-    landcover:RockyOutcrop							|	#						|	#					|	0		,
-    landcover:SparseVegetation						|	#						|	#					|	1		,
-    landcover:BareArea								|	#						|	#					|	1		,
-    
-    landcover:Watercourse							|	#						|	#					|	0		,
-    landcover:Lake									|	#						|	#					|	0		,
-    landcover:Canal									|	#						|	#					|	0		,
-    landcover:Reservoir								|	#						|	#					|	0		,
-    landcover:ContinentalAquaculturePond			|	#						|	#					|	0		,
-    landcover:ArtificialWaterBody					|	#						|	#					|	0		,
-        
-    landcover:InlandWetland							|	#						|	#					|	0.08	    
-}};
-
-define USPED_P_FACTOR_TABLE as {{
-	
-	       land_cover_type							|	p_factor
-	--------------------------------------------------------------
-    hydrology:Sewage								|	1	,
-    landcover:ArtificialSurface						|	1	,
-    landcover:Forest								|	1	,    
-    ecology:ShrubVegetation landcover:Grassland		|	1	,
-    ecology:WoodyVegetation landcover:Shrubland		|	1	,
-    es.nca:Mediterranean landcover:Shrubland		|	1	,
-    landcover:ScrubHerbaceousVegetation				|	1	,    
-    nca.ecoregion:HighMonte landcover:Pastureland	|	1	,
-    landcover:Pastureland							|	1	,
-    landcover:ArableLand							|	0.5	,
-	landcover:AgriculturalVegetation				|	0.8	,
-	landcover:SeminaturalOpenSpace					|	1	,
-	landcover:WaterBody								|	1	,
-	landcover:Wetland								|	1
-}};
-
+//For soil erodibility, instead of computing it using the general formula of the global model using sand, silt, clay and soil organic matter
+//we directly annotate and use a JRC European soil erodibility layer
+model 'local:rain80818:im.aries.pyrenees:aries_nbsoil_data.eu28_esdac_soil_erodibility_kfactor_500m_epsg3035_2014'
+	as soil:SoilErodibility named k_factor;
+ 
+//At the same time, the JRC European layer for erosivity can be used
 model local:justus.muhando:im.aries.pyrenees:aries_pyrenees_data.eu_r_factor_epsg3035_500m_2010
 	as soil:RainfallRunoffErosivity in (MJ*mm)/(ha*h) named r_factor;
 	
-model local:rain80818:im.aries.pyrenees:aries_nbsoil_data.eu28_esdac_soil_erodibility_kfactor_500m_epsg3035_2014
-	as soil:SoilErodibility named k_factor;
+//Triveneto DEM at 10 m resolution used for the calculation of contributing area
+model 'local:justus.muhando:im.data.global:im-data-global-geography.triveneto_dem_10m_epsg3035'
+    as geography:Elevation in m named elevation;
+    
+// Slope derived externally in GIS from the same 10 m Triveneto DEM
+model 'local:justus.muhando:im.data.global:im-data-global-geography.triveneto_slope_10m_epsg3035'
+    as geography:Slope in degree_angle named slope_trv;
+
+
+// Aspect derived externally in GIS from the same 10 m Triveneto DEM.
+model 'local:justus.muhando:im.data.global:im-data-global-geography.triveneto_aspect_10m_epsg3035'
+    as geography:Aspect in degree_angle named aspect_trv;
 	
+//WE DO NOT HAVE THE vegetation_type and crop_type columns in the c_factor table
+//Hence, the code below for CoverManagement was modified by discarding the two lines calling for vegetation and crop + removing the two related columns in the lookup line
 model soil:CoverManagement named c_factor
 	observing
-		landcover:LandCoverType named landcover,
-		ecology:Vegetation landcover:LandCoverType named vegetation_type,
-		type of agriculture:Crop named crop_type
-	lookup (landcover, vegetation_type, crop_type, ?) into USPED_C_FACTOR_TABLE;
+		landcover:LandCoverType named landcover
+	lookup (landcover, ?) into C_FACTOR_TABLE_TRV;
 	
 model soil:SupportPractice named p_factor
     observing 
     	landcover:LandCoverType named landcover
-    lookup (landcover, ?) into USPED_P_FACTOR_TABLE;
+    lookup (landcover, ?) into P_FACTOR_TABLE_TRV;
     
 /*
  * # LS factor: A^m * (sinb)^n
  */
-define WEIGHT_C_FACTOR_TABLE as {{
-	
-	    landcover                             		| cw_factor
-	-----------------------------------------------------------	
-	hydrology:Sewage								|	1	,
-    landcover:ArtificialSurface						|	1	,
-    landcover:Forest								|	0.5	,    
-    ecology:ShrubVegetation landcover:Grassland		|	0.7	,
-    ecology:WoodyVegetation landcover:Shrubland		|	0.7	,
-    es.nca:Mediterranean landcover:Shrubland		|	0.7	,
-    landcover:ScrubHerbaceousVegetation				|	0.7	,    
-    nca.ecoregion:HighMonte landcover:Pastureland	|	0.7	,
-    landcover:Pastureland							|	0.7	,
-    landcover:ArableLand							|	0.7	,
-	landcover:AgriculturalVegetation				|	0.7	,
-	landcover:SeminaturalOpenSpace					|	1	,
-	landcover:WaterBody								|	1	,
-	landcover:Wetland								|	0.9
-}};
 
 model im:Reference soil:CoverManagement named c_factor_weight
 	observing
 		landcover:LandCoverType named landcover
-	lookup (landcover, ?) into WEIGHT_C_FACTOR_TABLE;
+	lookup (landcover, ?) into WEIGHT_C_FACTOR_TABLE_TRV;
 
 number weighted_contribution
 	observing
@@ -175,7 +81,7 @@ model hydrology:ContributingArea of hydrology:Watershed in m^2 named contributin
 model soil:SlopeSteepnessAndLength named ls_factor
 	observing
 		hydrology:ContributingArea of hydrology:Watershed in m^2 named contributingarea, 
-		geography:Slope in degree_angle named slope
+		geography:Slope in degree_angle named slope //HERE, SHOULD WE USED slope_trv IMPORTED ABOVE?
 	set to [
 		def sloperadians = slope * Math.PI / 180
 		def ex = Math.sin(sloperadians)
@@ -187,7 +93,7 @@ model soil:SlopeSteepnessAndLength named ls_factor
 		return ls
 	];	
 
-* ----------------------------------------------------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------------------------------------------
  * # USPED sediment transport capacity.
  */
 @intensive(space)
@@ -365,69 +271,11 @@ model level of im:Potential (im:Changed soil:Soil im:Mass) caused by physical:De
 /* ----------------------------------------------------------------------------------------------------------------------------------
  * # USPED sediment transport capacity.
  */
-define USPED_C_FACTOR_TABLE_UNVEGETATED as {{
-	
-	    land_cover_type								|	vegetation_type			|	crop_type			|	c_factor
-	------------------------------------------------------------------------------------------------------------------
-	landcover:LowDensityUrban						|	#						|	#					|	0		,
-    landcover:Urban									|	#						|	#					|	0		,
-    landcover:IndustrialUnit						|	#						|	#					|	0		,
-    landcover:CommercialUnit						|	#						|	#					|	0		, 
-    landcover:RoadNetwork							|	#						|	#					|	0		,
-    landcover:HydraulicWorksite						|	#						|	#					|	0		,
-    landcover:Landfill								|	#						|	#					|	0		,    
-    hydrology:Sewage								|	#						|	#					|	0		,
-    landcover:Construction							|	#						|	#					|	0		,
-    landcover:MineDumpConstruction					|	#						|	#					|	0		, 
-    landcover:CemeteryPark							|	#						|	#					|	0		,
-    landcover:BotanicalGarden						|	#						|	#					|	1		,
-    landcover:UrbanPark								|	#						|	#					|	1		,    
-    landcover:GreenUrbanArea						|	#						|	#					|	0		,
-    landcover:CulturalArea							|	#						|	#					|	0		,
-    landcover:SportFacility							|	#						|	#					|	0		,    
-    landcover:RecreationalFacility					|	#						|	#					|	0		,
-    
-    landcover:DeciduousBroadleafForest				|	#						|	#					|	1		, 
-    landcover:ConiferousForest						|	#						|	#					|	1		,    
-	landcover:Forest								|	#						|	#					|	1		,
-    
-    ecology:ShrubVegetation landcover:Grassland		|	#						|	#					|	1		,
-    landcover:Fern									|	#						|	#					|	1		,
-    landcover:Grassland								|	#						|	#					|	1		,
-    ecology:WoodyVegetation landcover:Shrubland		|	#						|	#					|	1		,
-    es.nca:Mediterranean landcover:Shrubland		|	#						|	#					|	1		,    
-    landcover:Shrubland								|	#						|	#					|	1		,
-    landcover:TransitionalWoodlandScrub				|	#						|	#					|	1		,
-    landcover:ScrubHerbaceousVegetation				|	#						|	#					|	1		,
-    
-    landcover:ConiferPlantation						|	#						|	#					|	1		,
-    
-    landcover:Vineyard								|	#						|	#					|	1		,
-    landcover:PastureWithTree						|	#						|	#					|	1		,
-    nca.ecoregion:HighMonte landcover:Pastureland	|	#						|	#					|	1		,
-    landcover:Pastureland							|	#						|	#					|	1		,
-    
-    landcover:ArableLand							|	#						|	#					|	1		,                
-    landcover:AgriculturalVegetation				|	#						|	#					|	1		,    
-  
-    landcover:RockyOutcrop							|	#						|	#					|	0		,
-    landcover:SparseVegetation						|	#						|	#					|	1		,
-    landcover:BareArea								|	#						|	#					|	1		,
-    
-    landcover:Watercourse							|	#						|	#					|	0		,
-    landcover:Lake									|	#						|	#					|	0		,
-    landcover:Canal									|	#						|	#					|	0		,
-    landcover:Reservoir								|	#						|	#					|	0		,
-    landcover:ContinentalAquaculturePond			|	#						|	#					|	0		,
-    landcover:ArtificialWaterBody					|	#						|	#					|	0		,
-        
-    landcover:InlandWetland							|	#						|	#					|	1	    
-}};
 
 model soil:CoverManagement caused by ecology:Vegetation named c_factor_unvegetated
     observing
     	landcover:LandCoverType named landcover
-	lookup (landcover, *, *, ?) into USPED_C_FACTOR_TABLE_UNVEGETATED;	
+	lookup (landcover, ?) into C_FACTOR_TABLE_UNVEGETATED_TRV;	
 	
 @intensive(space)
 @extensive(time)   
@@ -571,6 +419,11 @@ model im:Retained soil:Soil im:Mass caused by ecology:Vegetation in t/ha named s
 		im:Potential (im:Changed soil:Soil im:Mass) in t/ha named erosion_deposition,
 		im:Potential (im:Changed soil:Soil im:Mass) caused by ecology:Vegetation in t/ha named erosion_deposition_unvegetated
 	set to [
-		def ret = erosion_deposition_unvegetated - erosion_deposition
+		def ret = erosion_deposition - erosion_deposition_unvegetated
 		return ((ret > 0) ? ret : 0)
 	]; 
+
+// TODO: verify soil_retention sign convention.
+// With erosion < 0, the original Pyrenees subtraction may be reversed.
+// Expected formulation may be:
+// erosion_deposition - erosion_deposition_unvegetated.

@@ -18,11 +18,19 @@ observe earth:Region named trv_aoi
          
          
 // Triveneto AOI
-observe earth:Region named trv_aoi_coarse    
-    over space (shape = 
-    'EPSG:4326 POLYGON ((10.897898409543593 45.677374397691494, 11.564724334443403 45.77061994756704, 11.532344294576955 45.38533417267038, 10.934325926601353 45.391019310916164, 10.897898409543593 45.677374397691494))',
+//observe earth:Region named trv_aoi_coarse    
+//    over space (shape = 
+//    'EPSG:4326 POLYGON ((10.897898409543593 45.677374397691494, 11.564724334443403 45.77061994756704, 11.532344294576955 45.38533417267038, 10.934325926601353 45.391019310916164, 10.897898409543593 45.677374397691494))',
 //    'EPSG:4326 POLYGON ((12.444102641611849 45.31395547316356, 10.50363682911185 45.31395547316356, 10.50363682911185 46.019094016901334, 12.444102641611849 46.019094016901334, 12.444102641611849 45.31395547316356))',
-                grid= "250 m",
-               projection= "EPSG:4326"), 
+//                grid= "250 m",
+//               projection= "EPSG:4326"), 
 //         time(start=2018, end=2024, step=1.year);
-         time(year=2025);
+//         time(year=2025);
+         
+//Test
+//observe earth:Region named urg    
+//    over space (urn = 'local:federico.cornacchia:natcaptriveneto:test',
+//               grid= "250 m",
+//              projection= "EPSG:4326"), 
+//         time(start=2018, end=2024, step=1.year);
+//         time(year=2020);

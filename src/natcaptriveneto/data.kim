@@ -2,10 +2,10 @@ project private namespace natcaptriveneto.data
 using nca.ecology.ipcc, nca.landuse.ipcc;
 
 // Testing Triveneto 2018 LULC
-number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2018_250'
+number 'local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018'
 		as trv_uso_ispra_2018;
 // Testing Triveneto 2023 LULC
-number 'local:federico.cornacchia:natcaptriveneto:TRV_USO_2023_250'
+number 'local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023'
 		as trv_uso_ispra_2023;
 
 model local:justus.muhando:im.data.global:im-data-global-climate.triveneto_zone_clima_250m_epsg3035
@@ -16,10 +16,8 @@ model local:justus.muhando:im.data.global:im-data-global-climate.triveneto_zone_
  	nca.ecology.ipcc:PolarMoist if 3;
 
 
-
-model 
-//	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018,
-	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2023 
+// local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018
+model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 
 as landcover:LandCoverType classified into
 	landcover:ConiferousForest if in (211 212 213),
 	landcover:BroadleafForest if in (221 222 223),
@@ -52,21 +50,19 @@ as landcover:LandCoverType classified into
 
 
 
-
+// local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018
 @colormap(values = {
 	nca.landuse.ipcc:OldSecondaryForest: (15 60 15)
 	nca.landuse.ipcc:YoungSecondaryForest: (22 92 22)
 }) 
-model 
- 	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018,
-	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2023 
+model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 
 as //type of nca.landuse.ipcc:LandUseType classified into
 	nca.landuse.ipcc:LandUseType classified into
 	nca.landuse.ipcc:OldSecondaryForest if in (212 221),
 	nca.landuse.ipcc:YoungSecondaryForest if in (212 222);	
  
 number 
-	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_epsg3035_10m_2018 as test;	
+	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 as test;	
                            
 model local:justus.muhando:im.data.global:im-data-global-soil.triveneto_soc_stock_t_ha_250m_epsg3035
  as soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha;       

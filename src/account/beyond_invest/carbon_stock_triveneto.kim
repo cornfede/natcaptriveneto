@@ -12,7 +12,7 @@ abstract attribute GroundRelativePosition
         );
 
 // Could go in ecology
-quantity AboveGroundBiomass
+mass AboveGroundBiomass
     "The total mass of living biological organisms located above the soil surface in a given area."
     is AboveGround biology:Biomass within ecology:Vegetation earth:Region;
 //    is earth:AboveGround biology:Biomass within ecology:Vegetation earth:Region;
@@ -20,7 +20,25 @@ quantity AboveGroundBiomass
 mass BelowGroundBiomass
     "The total mass of living biological organisms (typically roots) located beneath the soil surface."
     is BelowGround biology:Biomass within ecology:Vegetation earth:Region;
-    
+
+// -----------------------------------------------------------------------------
+// NON-SOIL CARBON POOLS FOR THE CURRENT ARIES FORMULATION
+//
+// The table contains c_above, c_below and c_dead only.
+// Soil organic carbon is deliberately NOT included here.
+// It is supplied independently by the spatial SoilGrids SOC stock layer
+// (0-30 cm, t C/ha, 250 m).
+//
+// Forest non-soil coefficients retain explicit variation by:
+// LULC type × forest age/status × climatic zone.
+//
+// For non-forest classes, climate is retained in the lookup structure even
+// where coefficients are identical across climates, to preserve the current
+// operational structure and facilitate review.
+//
+// c_dead represents dead organic matter carbon:
+// c_dead = litter carbon + dead wood carbon.
+// -----------------------------------------------------------------------------    
 define TRIVENETO_CARBON_POOLS_TABLE as {{
   landcover                      | forest_type                           | ipcc_climatic_region         	 | c_above | c_below | c_dead
   ---------------------------------------------------------------------------------------------------------------------------------------
@@ -112,6 +130,14 @@ define TRIVENETO_CARBON_POOLS_TABLE as {{
   landcover:Cotton               | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
   landcover:Cotton               | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
   landcover:Cotton               | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
+  landcover:PermanentCropland    | #                                     | nca.ecology.ipcc:WarmTemperateWet | 5.625   | 0       | 0      ,
+  landcover:PermanentCropland    | #                                     | nca.ecology.ipcc:WarmTemperateDry | 5.625   | 0       | 0      ,
+  landcover:PermanentCropland    | #                                     | nca.ecology.ipcc:ColdTemperateWet | 5.625   | 0       | 0      ,
+  landcover:PermanentCropland    | #                                     | nca.ecology.ipcc:PolarMoist       | 5.625   | 0       | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:WarmTemperateDry | 1.27    | 5.08    | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:WarmTemperateWet | 1.27    | 5.08    | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:ColdTemperateWet | 1.27    | 5.08    | 0      ,
+  landcover:Pastureland          | #                                     | nca.ecology.ipcc:PolarMoist       | 1.27    | 5.08    | 0      ,
   landcover:Grassland            | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0.803   | 3.213   | 0      ,
   landcover:Grassland            | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0.803   | 3.213   | 0      ,
   landcover:Grassland            | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0.803   | 3.213   | 0      ,
@@ -120,20 +146,6 @@ define TRIVENETO_CARBON_POOLS_TABLE as {{
   landcover:ArableLand           | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
   landcover:ArableLand           | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
   landcover:ArableLand           | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
-  landcover:PermanentCropland    | #                                     | #								 | 5.625   | 0       | 0      ,
-  landcover:Vineyard             | #                                     | #								 | 5.625   | 0       | 0      ,
-  landcover:FruitBerryPlantation | #                                     | #								 | 5.625   | 0       | 0      ,
-  landcover:OliveGrove           | #                                     | #								 | 5.625   | 0       | 0      ,
-  landcover:NutOrchard           | #                                     | #								 | 5.625   | 0       | 0      ,
-  landcover:PermanentCropland    | #                                     | #								 | 5.625   | 0       | 0      ,
-  landcover:Pastureland          | #                                     | nca.ecology.ipcc:WarmTemperateDry | 1.27    | 5.08    | 0      ,
-  landcover:Pastureland          | #                                     | nca.ecology.ipcc:WarmTemperateWet | 1.27    | 5.08    | 0      ,
-  landcover:Pastureland          | #                                     | nca.ecology.ipcc:ColdTemperateWet | 1.27    | 5.08    | 0      ,
-  landcover:Pastureland          | #                                     | nca.ecology.ipcc:PolarMoist       | 1.27    | 5.08    | 0      ,
-  landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
-  landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
-  landcover:Wetland              | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
-  landcover:Wetland              | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0      ,
   landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateWet | 0       | 0       | 0      ,
   landcover:Wetland              | #                                     | nca.ecology.ipcc:WarmTemperateDry | 0       | 0       | 0      ,
   landcover:Wetland              | #                                     | nca.ecology.ipcc:ColdTemperateWet | 0       | 0       | 0      ,
@@ -144,15 +156,25 @@ define TRIVENETO_CARBON_POOLS_TABLE as {{
   landcover:BareRock             | #                                     | nca.ecology.ipcc:PolarMoist       | 0       | 0       | 0     
 }};
 
+// -----------------------------------------------------------------------------
+// ABOVE-GROUND CARBON STOCK
+// c_above from TRIVENETO_CARBON_POOLS_TABLE.
+// Output unit: t C/ha.
+// -----------------------------------------------------------------------------
 @intensive(space)
 model chemistry:Carbon AboveGround im:Mass in t/ha
 	observing
 	landcover:LandCoverType named landcover,
 	nca.landuse.ipcc:LandUseType named forest_type, 
 	type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region
-lookup (landcover, forest_type, ipcc_climatic_region, ? , * ,* ) into TRIVENETO_CARBON_POOLS_TABLE
-	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+lookup (landcover, forest_type, ipcc_climatic_region, ? , * ,* ) into TRIVENETO_CARBON_POOLS_TABLE;
+	//over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 
+// -----------------------------------------------------------------------------
+// BELOW-GROUND CARBON STOCK
+// c_below from TRIVENETO_CARBON_POOLS_TABLE.
+// Output unit: t C/ha.
+// -----------------------------------------------------------------------------
 
 @intensive(space)
 model chemistry:Carbon BelowGround im:Mass in t/ha
@@ -160,17 +182,36 @@ model chemistry:Carbon BelowGround im:Mass in t/ha
 	landcover:LandCoverType named landcover,
 	nca.landuse.ipcc:LandUseType named forest_type, 
 	type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region
-lookup (landcover, forest_type, ipcc_climatic_region, * , ? ,* ) into TRIVENETO_CARBON_POOLS_TABLE
-	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+lookup (landcover, forest_type, ipcc_climatic_region, * , ? ,* ) into TRIVENETO_CARBON_POOLS_TABLE;
+	//over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 
+// -----------------------------------------------------------------------------
+// DEAD ORGANIC MATTER CARBON POOL (c_dead)
+//
+// The existing Litterfall-based semantic observable is retained
+//
+// IMPORTANT:
+// The numerical values assigned here do NOT represent litter carbon alone.
+// In the Triveneto carbon-pool lookup:
+//
+//      c_dead = litter carbon + dead-wood carbon
+//
+// The forest values were derived from IPCC 2019 Vol. 4, Ch. 2, Table 2.2,
+// by summing the corresponding litter and dead-wood stocks.
+//
+// Therefore, this model should be interpreted operationally as the
+// dead-organic-matter carbon pool used in the carbon-stock calculation,
+// despite the more restrictive Litterfall semantic annotation.
+// -----------------------------------------------------------------------------
 @intensive(space)
 model chemistry:Organic chemistry:Carbon im:Mass caused by ecology.incubation:Litterfall in t/ha
 	observing
 	landcover:LandCoverType named landcover,
 	nca.landuse.ipcc:LandUseType named forest_type, 
 	type of nca.ecology.ipcc:ClimaticZone named ipcc_climatic_region
-lookup (landcover, forest_type, ipcc_climatic_region, * , * ,? ) into TRIVENETO_CARBON_POOLS_TABLE
-	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+lookup (landcover, forest_type, ipcc_climatic_region, * , * ,? ) into TRIVENETO_CARBON_POOLS_TABLE;
+	//over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+
 
 
 //@intensive(space)
@@ -186,10 +227,10 @@ lookup (landcover, forest_type, ipcc_climatic_region, * , * ,? ) into TRIVENETO_
 @intensive(space)
 model chemistry:Carbon im:Mass in t/ha
 	observing
-	chemistry:Carbon AboveGround im:Mass in t/ha named above_ground_biomass,
-	chemistry:Carbon BelowGround im:Mass in t/ha named below_ground_biomass,
-	soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha named soil_carbon_mass,
-	chemistry:Organic chemistry:Carbon im:Mass caused by ecology.incubation:Litterfall in t/ha named litter_biomass
-set to [above_ground_biomass + below_ground_biomass + soil_carbon_mass + litter_biomass]
-	over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
+	chemistry:Carbon AboveGround im:Mass in t/ha named above_ground_carbon,
+	chemistry:Carbon BelowGround im:Mass in t/ha named below_ground_carbon,
+	soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha named soil_carbon,
+	chemistry:Organic chemistry:Carbon im:Mass caused by ecology.incubation:Litterfall in t/ha named dead_organic_matter_carbon
+set to [above_ground_carbon + below_ground_carbon + soil_carbon + dead_organic_matter_carbon];
+	//over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 

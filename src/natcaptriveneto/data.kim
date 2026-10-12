@@ -15,16 +15,30 @@ model local:justus.muhando:im.data.global:im-data-global-climate.triveneto_zone_
 	nca.ecology.ipcc:ColdTemperateWet if 2,
  	nca.ecology.ipcc:PolarMoist if 3;
 
+// ============================================================================
+// ACTIVE LULC YEAR: 2023
+// Change BOTH models below when switching year.
+// ============================================================================
+// IMPORTANT:
+// When switching to 2018:
+// 1. change time(year=2023) to time(year=2018) in the analysis context;
+// 2. change BOTH active LULC resource URNs below from *_2023 to *_2018
+// No carbon coefficients or other model components should change
 
 // local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018
 model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 
 as landcover:LandCoverType classified into
+
 	landcover:ConiferousForest if in (211 212 213),
 	landcover:BroadleafForest if in (221 222 223),
+	
 	landcover:MineralExtraction if 300,
 	landcover:Urban if 401,
 	landcover:UrbanPark if 403,
-	landcover:WaterBody if 500,
+	
+	// Updated final water classes
+	landcover:WaterBody if in (500 501 502),
+	
 	landcover:Wheat if 1110,
 	landcover:Cereals if 1120,
 	landcover:Maize if 1130,
@@ -37,20 +51,21 @@ as landcover:LandCoverType classified into
 	landcover:Soybean if 1420,
 	landcover:Rapeseed if 1430,
 	landcover:Cotton if 1440,
+	
 	landcover:Grassland if 1500,
 	landcover:ArableLand if 1600,
+	
+	// Code 2100 is one aggregated permanent-crop class in the raster (Vineyard, FruitBerryPlantation, OliveGrove, NutOrchard)
 	landcover:PermanentCropland if 2100,
-	landcover:Vineyard if 2100,
-	landcover:FruitBerryPlantation if 2100,
-	landcover:OliveGrove if 2100,
-	landcover:NutOrchard if 2100,
+	
 	landcover:Pastureland if 3100,
 	landcover:Wetland if in (6101 6102),
+	
+	// Final LULC class combines bare rock / bare soil
 	landcover:BareRock if 6201;
 
+// Use this to substitute year 2018 to 2023: local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018
 
-
-// local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018
 @colormap(values = {
 	nca.landuse.ipcc:OldSecondaryForest: (15 60 15)
 	nca.landuse.ipcc:YoungSecondaryForest: (22 92 22)
@@ -58,11 +73,12 @@ as landcover:LandCoverType classified into
 model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 
 as //type of nca.landuse.ipcc:LandUseType classified into
 	nca.landuse.ipcc:LandUseType classified into
-	nca.landuse.ipcc:OldSecondaryForest if in (212 221),
+	nca.landuse.ipcc:OldSecondaryForest if in (211 221),
 	nca.landuse.ipcc:YoungSecondaryForest if in (212 222);	
- 
-number 
-	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 as test;	
+
+// Diagnostic raw LULC access retained from model development 
+//number 
+//	local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 as test;	
                            
 model local:justus.muhando:im.data.global:im-data-global-soil.triveneto_soc_stock_t_ha_250m_epsg3035
  as soil:Soil chemistry:Organic chemistry:Carbon im:Mass in t/ha;       

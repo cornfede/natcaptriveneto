@@ -234,3 +234,116 @@ model chemistry:Carbon im:Mass in t/ha
 set to [above_ground_carbon + below_ground_carbon + soil_carbon + dead_organic_matter_carbon];
 	//over space(urn='local:justus.muhando:im.data.global:im-data-global-geography_triveneto_boundary_epsg4326');
 
+// -----------------------------------------------------------------------------
+// STATIC BIOPHYSICAL CARBON-STOCK ACCOUNT BY LAND-COVER TYPE
+//
+// Reports the total modelled carbon stock for the active accounting year,
+// disaggregated by LandCoverType.
+//
+// The underlying carbon model is spatially intensive (t C/ha). The table
+// requests carbon mass and aggregates it across the spatial extent of each
+// land-cover class.
+//
+// This table is intended as an accounting/reporting output. It does not alter
+// the underlying carbon-stock model.
+//
+// IMPORTANT:
+// The table totals will be checked against the independently integrated
+// exported carbon raster before being used in the comparative analysis.
+// -----------------------------------------------------------------------------
+
+define table carbon_stock_biophysical_static as {
+
+    title: "Carbon stock by land cover type in given year",
+
+    label: "Carbon stock by land cover",
+
+    target: chemistry:Carbon im:Mass in t
+
+    columns: ({
+        title: "{classifier}",
+        target: chemistry:Carbon im:Mass in t,
+        filter: landcover:LandCoverType,
+        aggregation: sum
+    }
+    {
+        title: "Total",
+        summarize: sum,
+        style: bold
+    }),
+
+    rows: {
+        title: "Carbon stock {start}"
+    }
+};
+
+// -----------------------------------------------------------------------------
+// STATIC MONETARY VALUE OF CARBON STOCK
+//
+// The physical carbon-stock density (t C/ha) is first mediated by k.LAB to
+// spatially extensive carbon mass (t C). This conversion is already validated
+// by the biophysical accounting table.
+//
+// The extensive carbon mass is then multiplied by the central exchange-value
+// benchmark:
+//     74 EUR/tCO2 × 44/12 = 271.33 EUR/tC
+//
+// Output: total monetary value per spatial unit in EUR@2025.
+//
+// This avoids requiring k.LAB to mediate directly from EUR/ha to EUR, which
+// currently produces an IValueMediator error.
+// -----------------------------------------------------------------------------
+
+@extensive(space)
+model monetary value of chemistry:Carbon im:Mass in EUR@2025
+
+    observing
+        chemistry:Carbon im:Mass in t named carbon_stock
+
+    set to [
+        def carbon_price_eur_per_tc = 271.33
+        return carbon_price_eur_per_tc * carbon_stock
+    ];
+
+// -----------------------------------------------------------------------------
+// STATIC MONETARY CARBON-STOCK ACCOUNT BY LAND-COVER TYPE
+//
+// Reports the exchange-value-based monetary value of the modelled carbon stock
+// for the active accounting year, disaggregated by LandCoverType.
+//
+// Central price: 271.33 EUR/tC.
+//
+// As for the physical table, the resulting totals will be independently
+// validated before being used in the paper.
+// -----------------------------------------------------------------------------
+
+define table carbon_stock_monetary_static as {
+
+    title: "Carbon monetary value by land cover type in given year",
+
+    label: "Carbon monetary value by land cover",
+
+    target: monetary value of chemistry:Carbon im:Mass in EUR@2025
+
+    columns: ({
+        title: "{classifier}",
+        target: monetary value of chemistry:Carbon im:Mass in EUR@2025,
+        filter: landcover:LandCoverType,
+        aggregation: sum
+    }
+    {
+        title: "Total",
+        summarize: sum,
+        style: bold
+    }),
+
+    rows: {
+        title: "Carbon monetary value {start}"
+    }
+};
+
+//PROBLEM
+//The initial ARIES accounting tables were summing spatially intensive outputs 
+//(t C/ha and €/ha) directly, rather than first converting them to spatially extensive 
+//quantities (t C and €) using cell area. The underlying carbon and monetary models were 
+//correct; the issue was only in the aggregation step of the reporting tables.

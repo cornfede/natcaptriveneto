@@ -16,7 +16,7 @@ model local:justus.muhando:im.data.global:im-data-global-climate.triveneto_zone_
  	nca.ecology.ipcc:PolarMoist if 3;
 
 // ============================================================================
-// ACTIVE LULC YEAR: 2023
+// ACTIVE LULC YEAR: 2018
 // Change BOTH models below when switching year.
 // ============================================================================
 // IMPORTANT:
@@ -25,8 +25,8 @@ model local:justus.muhando:im.data.global:im-data-global-climate.triveneto_zone_
 // 2. change BOTH active LULC resource URNs below from *_2023 to *_2018
 // No carbon coefficients or other model components should change
 
-// local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018
-model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 
+// local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023
+model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018 
 as landcover:LandCoverType classified into
 
 	landcover:ConiferousForest if in (211 212 213),
@@ -70,7 +70,7 @@ as landcover:LandCoverType classified into
 	nca.landuse.ipcc:OldSecondaryForest: (15 60 15)
 	nca.landuse.ipcc:YoungSecondaryForest: (22 92 22)
 }) 
-model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2023 
+model local:justus.muhando:im.data.global:im-data-global-landcover.triveneto_lulc_sottoclassi_epsg3035_250m_2018 
 as //type of nca.landuse.ipcc:LandUseType classified into
 	nca.landuse.ipcc:LandUseType classified into
 	nca.landuse.ipcc:OldSecondaryForest if in (211 221),

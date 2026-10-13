@@ -6,7 +6,7 @@ observe earth:Region named trv_aoi
                 grid= "250 m",
                projection= "EPSG:4326"), 
 //         time(start=2018, end=2024, step=1.year);
-         time(year=2023);
+         time(year=2018);
 
 // Duemmer AOI
 //observe earth:Region named duemmer_aoi    
